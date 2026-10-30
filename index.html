@@ -177,6 +177,33 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .strip > div{width:44px;height:44px;border-radius:7px;background:var(--surface);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-family:var(--f-mono);font-size:9px;color:var(--muted)}
 .strip img{width:100%;height:100%;object-fit:cover}
 
+
+/* viewer */
+.viewer{position:fixed;inset:0;z-index:22;background:#0B1210;color:#E4ECEA;display:flex;flex-direction:column;animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0}}
+.vbar{display:flex;align-items:center;gap:6px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.08)}
+.vbar .iconbtn{color:#C9D6D3}
+.vbar .iconbtn:hover{color:#fff;border-color:rgba(255,255,255,.2)}
+.vname{flex:1;min-width:0;display:grid;line-height:1.3}
+.vname b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vname span{font-size:11.5px;color:#8FA19D}
+.vstage{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+.vimg{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.vmedia{max-width:100%;max-height:100%;background:#000}
+.vtext{margin:0;align-self:start;justify-self:stretch;padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));font-family:var(--f-mono);font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:#DCE6E3;max-width:900px;width:100%;margin-inline:auto}
+.vmsg{display:grid;justify-items:center;gap:8px;text-align:center;color:#8FA19D;max-width:36ch;padding:24px}
+.vmsg b{color:#E4ECEA;font-family:var(--f-display);font-size:19px;font-weight:500}
+.vmsg .glyph{background:#15201E;border-color:#2A3A36;color:#8FA19D}
+.vmsg .glyph::before{background:#0B1210;border-color:#2A3A36}
+.vpdf{align-self:start;width:min(1000px,100%);display:grid;gap:14px;padding:16px max(12px,env(safe-area-inset-right,0px)) 40px max(12px,env(safe-area-inset-left,0px))}
+.vpage{position:relative;background:#fff;border-radius:4px;overflow:hidden;width:100%;max-width:100%}
+.vpage canvas{width:100%;height:100%;display:block}
+.vpage span{position:absolute;right:8px;bottom:6px;font-size:10.5px;color:#556;background:rgba(255,255,255,.85);padding:0 6px;border-radius:4px}
+.vnav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(11,18,16,.6);color:#E4ECEA;display:grid;place-items:center}
+.vnav:hover{border-color:var(--brass)}
+.vnav.prev{left:max(12px,env(safe-area-inset-left,0px))}
+.vnav.next{right:max(12px,env(safe-area-inset-right,0px))}
+@media (max-width:820px){.vnav{display:none}}
 /* drawer */
 .scrim{position:fixed;inset:0;background:rgba(10,18,16,.35);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;display:flex;flex-direction:column;box-shadow:var(--shadow);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);animation:slide .22s ease-out}
@@ -238,6 +265,7 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0}
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}html,body{height:100%}#app{height:100%}</style>
 <script src="/config.js"></script>
 <script src="/vendor/supabase.js"></script>
+<script src="/vendor/pdf.min.js" defer></script>
 </head>
 <body>
 
@@ -319,6 +347,9 @@ const ICON = {
   plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6 6 18"/>', check:'<path d="m5 12 4.5 4.5L19 7"/>',
   lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   down:'<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>', trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
+  left:'<path d="m15 5-7 7 7 7"/>', right:'<path d="m9 5 7 7-7 7"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>'
 };
 const ic = (n, cls='i') => `<svg class="${cls}" viewBox="0 0 24 24">${ICON[n]}</svg>`;
@@ -760,7 +791,9 @@ function thumbHTML(it, cls='glyph'){
   if (it.thumb) return `<img src="${it.thumb}" alt="">`;
   return `<div class="${cls}">${esc(typeLabel(it))}</div>`;
 }
+let viewList = [];
 function paint(C, fold, list, scored){
+  viewList = list.map(i => i.id);
   const total = fold.length + list.length;
   if (!total) {
     C.innerHTML = view.type === 'search'
@@ -842,8 +875,73 @@ function drawMap(pl){
   });
 }
 
+
+/* ================= full-screen viewer ================= */
+let viewerId = null, pdfTask = null;
+const kindOf = it => { const e = extOf(it.name), m = it.mime || '';
+  if (isImg(it) && e !== 'heic') return 'image';
+  if (e === 'pdf' || m === 'application/pdf') return 'pdf';
+  if (/^video\//.test(m) || /^(mp4|webm|mov|m4v)$/.test(e)) return 'video';
+  if (/^audio\//.test(m) || /^(mp3|m4a|wav|ogg|aac)$/.test(e)) return 'audio';
+  if (/^text\//.test(m) || /json|csv|xml|markdown/.test(m) || /^(txt|md|csv|json|log|xml)$/.test(e)) return 'text';
+  return 'other'; };
+function stepViewer(d){ if (!viewerId) return; const i = viewList.indexOf(viewerId); if (i < 0 || viewList.length < 2) return; openViewer(viewList[(i + d + viewList.length) % viewList.length]); }
+async function openViewer(id){
+  const it = items.get(id); if (!it) return;
+  if (pdfTask) { try { pdfTask.destroy(); } catch {} pdfTask = null; }
+  viewerId = id; const i = viewList.indexOf(id), n = viewList.length;
+  $('#layer').innerHTML = `<div class="viewer" role="dialog" aria-label="${esc(it.name)}">
+    <div class="vbar">
+      <button class="iconbtn" data-close aria-label="Close">${ic('x')}</button>
+      <div class="vname"><b>${esc(it.name)}</b><span class="mono">${fmtSize(it.size)}${i >= 0 && n > 1 ? ` · ${i+1} of ${n}` : ''}</span></div>
+      <button class="iconbtn" id="vInfo" aria-label="Details">${ic('info')}</button>
+      <button class="iconbtn" id="vDown" aria-label="Save to device">${ic('down')}</button>
+    </div>
+    <div class="vstage" id="vStage"><div class="vmsg"><div class="dial spin" style="width:44px;height:44px;border-width:1.5px"></div>Decrypting…</div></div>
+    ${i >= 0 && n > 1 ? `<button class="vnav prev" id="vPrev" aria-label="Previous">${ic('left')}</button><button class="vnav next" id="vNext" aria-label="Next">${ic('right')}</button>` : ''}
+  </div>`;
+  $('#vInfo').onclick = () => openFile(id); $('#vDown').onclick = () => saveOut(it);
+  if ($('#vPrev')) { $('#vPrev').onclick = () => stepViewer(-1); $('#vNext').onclick = () => stepViewer(1); }
+  const stage = $('#vStage'); let sx = null;
+  stage.addEventListener('touchstart', e => { sx = e.touches.length === 1 ? e.touches[0].clientX : null; }, {passive:true});
+  stage.addEventListener('touchend', e => { if (sx == null || kindOf(it) === 'pdf') return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 60) stepViewer(dx < 0 ? 1 : -1); sx = null; }, {passive:true});
+  const say = html => { if (viewerId === id) stage.innerHTML = `<div class="vmsg">${html}</div>`; };
+  if (it.demo) return say(`${it.thumb ? '' : `<div class="glyph" style="transform:scale(1.5);margin-bottom:18px">${esc(typeLabel(it))}</div>`}<b>Demo item</b>Example entries have no file inside. Add your own files to view them here.`);
+  let b; try { b = await getBlob(it); } catch { return say('<b>Could not load this file</b>Check your connection and try again.'); }
+  if (viewerId !== id) return;
+  if (!b) return say('<b>File not available</b>It may still be uploading from another device.');
+  const k = kindOf(it), u = URL.createObjectURL(b); urls.push(u);
+  if (k === 'image') stage.innerHTML = `<img class="vimg" src="${u}" alt="${esc(it.name)}">`;
+  else if (k === 'video') stage.innerHTML = `<video class="vmedia" src="${u}" controls playsinline></video>`;
+  else if (k === 'audio') stage.innerHTML = `<div class="vmsg"><div class="glyph" style="transform:scale(1.5);margin-bottom:22px">${esc(typeLabel(it))}</div><audio src="${u}" controls></audio></div>`;
+  else if (k === 'text') { const t = await b.text(); stage.innerHTML = `<pre class="vtext">${esc(t.slice(0, 400000))}</pre>`; }
+  else if (k === 'pdf') renderPdf(b, stage, id);
+  else say(`<div class="glyph" style="transform:scale(1.5);margin-bottom:22px">${esc(typeLabel(it))}</div><b>No preview for ${esc(typeLabel(it))} files</b>Save it to your device to open it in the right app.<button class="btn primary" id="vSave2" style="margin-top:6px">${ic('down')}Save to device</button>`);
+  const s2 = $('#vSave2'); if (s2) s2.onclick = () => saveOut(it);
+}
+async function renderPdf(blob, stage, id){
+  const lib = window.pdfjsLib;
+  if (!lib) { stage.innerHTML = `<div class="vmsg"><b>The PDF reader didn't load</b>Refresh the page, or save the file to open it.</div>`; return; }
+  lib.GlobalWorkerOptions.workerSrc = '/vendor/pdf.worker.min.js';
+  try {
+    pdfTask = lib.getDocument({data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false});
+    const pdf = await pdfTask.promise; if (viewerId !== id) return;
+    stage.innerHTML = `<div class="vpdf" id="vPdf"></div>`; const box = $('#vPdf');
+    const width = Math.min(box.clientWidth || stage.clientWidth, 1000), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const io = new IntersectionObserver(es => es.forEach(async e => { if (!e.isIntersecting || e.target.dataset.done) return; e.target.dataset.done = 1; io.unobserve(e.target);
+      const pg = await pdf.getPage(+e.target.dataset.n); const v1 = pg.getViewport({scale:1}); const vp = pg.getViewport({scale: width / v1.width * dpr});
+      const c = e.target.querySelector('canvas'); c.width = vp.width; c.height = vp.height; await pg.render({canvasContext: c.getContext('2d'), viewport: vp}).promise; }), {root: stage, rootMargin: '600px 0px'});
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const pg = p === 1 ? await pdf.getPage(1) : null; const ratio = pg ? pg.getViewport({scale:1}) : null;
+      const d = document.createElement('div'); d.className = 'vpage'; d.dataset.n = p;
+      if (ratio) d.style.aspectRatio = `${ratio.width} / ${ratio.height}`; else d.style.aspectRatio = box.firstChild ? box.firstChild.style.aspectRatio : '8.5 / 11';
+      d.innerHTML = `<canvas></canvas><span class="mono">${p} / ${pdf.numPages}</span>`; box.appendChild(d); io.observe(d);
+    }
+  } catch (e) { if (viewerId === id) stage.innerHTML = `<div class="vmsg"><b>Could not open this PDF</b>${e && /password/i.test(e.message || '') ? 'It is password-protected. Save it and open it in a PDF app.' : 'Save it to your device to open it in a PDF app.'}</div>`; }
+}
+
 /* ================= drawer (file details) ================= */
-function closeLayer(){ $('#layer').innerHTML = ''; }
+function closeLayer(){ $('#layer').innerHTML = ''; viewerId = null; if (pdfTask) { try { pdfTask.destroy(); } catch {} pdfTask = null; } }
 function openModal(html){ $('#layer').innerHTML = `<div class="modal" data-closeout><div class="mbox" role="dialog" aria-modal="true">${html}</div></div>`; const f = $('#layer input, #layer select, #layer textarea'); if (f) f.focus(); }
 const folderOptions = (selected) => `<option value="">Top level</option>` + (function walk(pid, d){ return childrenOf(pid).filter(i=>i.kind==='folder').sort((a,b)=>a.name.localeCompare(b.name)).map(f => `<option value="${f.id}"${f.id===selected?' selected':''}>${'— '.repeat(d)}${esc(f.name)}</option>` + walk(f.id, d+1)).join(''); })(null, 0);
 const placeOptions = (selected, withAuto) => (withAuto ? `<option value="auto">From photo GPS, if any</option>` : '') + `<option value=""${!selected && !withAuto?' selected':''}>No place</option>` +
@@ -864,12 +962,13 @@ async function openFile(id){
       <div class="field"><label for="dNote">Note</label><textarea id="dNote" placeholder="Anything you'd search for later">${esc(it.note||'')}</textarea></div>
       ${p && similar.length ? `<div class="callout"><span><b>${similar.length} similar file${similar.length===1?'':'s'}</b> ${similar.length===1?'has':'have'} no place: ${similar.slice(0,3).map(s=>esc(s.name)).join(', ')}${similar.length>3?'…':''}</span><button class="btn" id="placeSimilar">${ic('place')}Save them at ${esc(p.name)}</button></div>` : ''}
     </div>
-    <div class="dfoot"><button class="btn primary" id="dSave">Save changes</button><button class="btn" id="dDown">${ic('down')}Save to device</button><button class="btn danger" id="dDel" style="margin-left:auto">${ic('trash')}Delete</button></div></div>`;
+    <div class="dfoot"><button class="btn" id="dView">${ic('eye')}View</button><button class="btn primary" id="dSave">Save changes</button><button class="btn" id="dDown">${ic('down')}Save to device</button><button class="btn danger" id="dDel" style="margin-left:auto">${ic('trash')}Delete</button></div></div>`;
   $('#dPlace').onchange = e => { if (e.target.value === 'new') newPlaceFlow(pid => { openFile(id); if (pid) { it.placeId = pid; persist(it).then(()=>{ render(); openFile(id); }); } }); };
   $('#dSave').onclick = async () => { it.name = $('#dName').value.trim() || it.name; it.parent = $('#dFolder').value || null; const pv = $('#dPlace').value; it.placeId = (pv && pv !== 'new') ? pv : null;
     it.tags = $('#dTags').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean); it.note = $('#dNote').value.trim(); await persist(it); closeLayer(); render(); toast('Saved'); };
   $('#dDel').onclick = () => confirmBox(`Delete “${it.name}”?`, 'The encrypted file is removed from this device. This cannot be undone.', 'Delete', async () => { await removeItem(it.id); render(); toast('Deleted'); });
   $('#dDown').onclick = () => saveOut(it);
+  $('#dView').onclick = () => openViewer(it.id);
   const ps = $('#placeSimilar'); if (ps) ps.onclick = async () => { for (const s of similar) { s.placeId = it.placeId; await persist(s); } render(); openFile(id); toast(`${similar.length} file${similar.length===1?'':'s'} saved at ${p.name}`); };
   // full preview
   try { const b = await getBlob(it); if (!b || !$('#pv')) return;
@@ -995,7 +1094,7 @@ document.addEventListener('click', e => {
   if (t.matches('[data-close],[data-closeout]')) return closeLayer();
   if (t.dataset.sel) { e.stopPropagation(); sel.has(t.dataset.sel) ? sel.delete(t.dataset.sel) : sel.add(t.dataset.sel); return renderMain(); }
   if (t.dataset.go) { $('#q').value = t.dataset.go === 'all' && results ? '' : $('#q').value; return go({type: t.dataset.go, id: t.dataset.id}); }
-  if (t.dataset.open) { if (sel.size && items.get(t.dataset.open)?.kind === 'file') { sel.has(t.dataset.open) ? sel.delete(t.dataset.open) : sel.add(t.dataset.open); return renderMain(); } return openFile(t.dataset.open); }
+  if (t.dataset.open) { if (sel.size && items.get(t.dataset.open)?.kind === 'file') { sel.has(t.dataset.open) ? sel.delete(t.dataset.open) : sel.add(t.dataset.open); return renderMain(); } return items.get(t.dataset.open)?.kind === 'file' ? openViewer(t.dataset.open) : openFile(t.dataset.open); }
   if (t.dataset.hint) { $('#q').value = t.dataset.hint; return runSearch(); }
   const a = t.dataset.act;
   if (a === 'upload') return $('#fileIn').click();
@@ -1018,6 +1117,7 @@ function newPlaceFlowEdit(p){
     p.lat = ok ? la : null; p.lon = ok ? lo : null; await persist(p); closeLayer(); render(); };
 }
 document.addEventListener('keydown', e => {
+  if (viewerId && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { stepViewer(e.key === 'ArrowRight' ? 1 : -1); return; }
   if (e.key === 'Escape') { if ($('#layer').innerHTML) closeLayer(); else if (sel.size) { sel.clear(); renderMain(); } }
   if (e.key === '/' && !$('#app').hidden && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); }
   if (e.key === 'Enter' && e.target.matches('[data-open]')) e.target.click();
