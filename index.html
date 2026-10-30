@@ -336,7 +336,7 @@ function openDB(uid){ return new Promise((res, rej) => { const r = indexedDB.ope
   r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('meta'); d.createObjectStore('records', {keyPath:'id'}); };
   r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
 function tx(store, mode, fn){ return new Promise((res, rej) => { const t = idb.transaction(store, mode); const s = t.objectStore(store); const out = fn(s);
-  t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); }
+  t.oncomplete = () => res(out instanceof IDBRequest ? out.result : out); t.onerror = () => rej(t.error); }); }
 const metaGet = k => tx('meta','readonly', s => s.get(k));
 const metaPut = (k,v) => tx('meta','readwrite', s => s.put(v,k));
 const recGetAll = () => tx('records','readonly', s => s.getAll());
