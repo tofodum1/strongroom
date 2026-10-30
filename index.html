@@ -69,6 +69,11 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .meter b{display:block;height:100%;background:var(--brass)}
 .linkbtn{background:none;border:0;color:var(--steel-muted);text-decoration:underline;text-underline-offset:3px;font-size:13px;padding:4px}
 .linkbtn:hover{color:var(--brass)}
+.linkrow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pwrap{position:relative}
+.pwrap input{padding-right:64px}
+.eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--steel-muted);font-size:12.5px;padding:6px}
+.eye:hover{color:var(--brass)}
 .lockfine{font-size:12px;color:var(--steel-muted);text-align:center;line-height:1.6}
 
 /* ---------- app shell ---------- */
@@ -244,9 +249,14 @@ main{display:flex;flex-direction:column;min-width:0;min-height:0}
     <p id="lockSub">Your private vault for documents, photos and files.</p>
     <form id="authForm">
       <input id="email" type="email" placeholder="Email" aria-label="Email" autocomplete="username" required>
-      <input id="acctPass" type="password" placeholder="Account password" aria-label="Account password" autocomplete="current-password" required minlength="8">
+      <div class="pwrap"><input id="acctPass" type="password" placeholder="Account password" aria-label="Account password" autocomplete="current-password" required minlength="8"><button type="button" class="eye" data-eye="acctPass" aria-label="Show password">Show</button></div>
+      <input id="acctPass2" type="password" placeholder="Repeat account password" aria-label="Repeat account password" autocomplete="new-password" minlength="8" hidden>
       <button class="btn primary" id="authBtn" type="submit">Sign in</button>
-      <button class="linkbtn" id="authSwap" type="button">New here? Create an account</button>
+      <div class="linkrow"><button class="linkbtn" id="authSwap" type="button">New here? Create an account</button><button class="linkbtn" id="forgotLink" type="button">Forgot password?</button></div>
+    </form>
+    <form id="resetForm" hidden>
+      <div class="pwrap"><input id="newPass" type="password" placeholder="New account password" aria-label="New account password" autocomplete="new-password" required minlength="8"><button type="button" class="eye" data-eye="newPass" aria-label="Show password">Show</button></div>
+      <button class="btn primary" id="resetBtn" type="submit">Save new password</button>
     </form>
     <form id="lockForm" autocomplete="off" hidden>
       <input id="pass" type="password" placeholder="Vault passphrase" aria-label="Vault passphrase" required minlength="6">
@@ -462,17 +472,38 @@ async function getBlob(it){
 /* ================= sign-in, then vault unlock ================= */
 let setupMode = false, cloudMeta = null, localMeta = null, authMode = 'in';
 function lockStatus(cls, txt){ const el = $('#lockStat'); el.className = 'lockstat ' + cls; el.querySelector('span').textContent = txt; }
-function showStep(step){ $('#authForm').hidden = step !== 'auth'; $('#lockForm').hidden = step !== 'vault'; $('#signOutLink').hidden = step !== 'vault'; }
+function showStep(step){ $('#authForm').hidden = step !== 'auth'; $('#resetForm').hidden = step !== 'reset'; $('#lockForm').hidden = step !== 'vault'; $('#signOutLink').hidden = step !== 'vault'; }
 async function boot(){
   if (!CFG.supabaseUrl || !window.supabase) { $('#lockErr').textContent = 'The site is missing its Supabase settings. Check config.js.'; return; }
+  const recovering = /type=recovery/.test(location.hash);
   const {data} = await sb.auth.getSession();
+  if (recovering && data.session) { history.replaceState(null, '', location.pathname); return showReset(); }
   if (data.session) await afterSignIn(data.session.user); else showAuth();
 }
+function showReset(){ showStep('reset'); $('#lockTitle').textContent = 'Choose a new password'; $('#lockSub').textContent = 'This resets your account password only. Your vault passphrase stays the same.'; lockStatus('cloud', 'Reset link accepted'); setTimeout(() => $('#newPass').focus(), 50); }
+sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') showReset(); });
+$('#resetForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('#lockErr').textContent = ''; $('#resetBtn').disabled = true;
+  const {data, error} = await sb.auth.updateUser({password: $('#newPass').value});
+  $('#resetBtn').disabled = false; $('#newPass').value = '';
+  if (error) { $('#lockErr').textContent = error.message; return; }
+  toast('Password updated'); await afterSignIn(data.user);
+});
+$('#forgotLink').addEventListener('click', async () => {
+  const email = $('#email').value.trim(); $('#lockErr').textContent = '';
+  if (!email) { $('#lockErr').textContent = 'Type your email above, then press Forgot password.'; $('#email').focus(); return; }
+  const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin});
+  if (error) { $('#lockErr').textContent = error.message; return; }
+  lockStatus('cloud', 'Reset link sent to ' + email + '. Open it on this device.');
+});
+document.addEventListener('click', e => { const b = e.target.closest('[data-eye]'); if (!b) return; const i = document.getElementById(b.dataset.eye); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.textContent = show ? 'Hide' : 'Show'; });
 function showAuth(){
   showStep('auth'); $('#lockTitle').textContent = 'Strongroom';
   $('#lockSub').textContent = authMode === 'in' ? 'Sign in to your vault account.' : 'Create an account. Your vault passphrase comes next and stays separate.';
   $('#authBtn').textContent = authMode === 'in' ? 'Sign in' : 'Create account';
   $('#authSwap').textContent = authMode === 'in' ? 'New here? Create an account' : 'Have an account? Sign in';
+  $('#acctPass2').hidden = authMode === 'in'; $('#acctPass2').required = authMode === 'up'; $('#forgotLink').hidden = authMode === 'up';
+  $('#acctPass').autocomplete = authMode === 'in' ? 'current-password' : 'new-password';
   lockStatus('', 'Step 1 of 2 · account'); setTimeout(() => $('#email').focus(), 50);
 }
 $('#authSwap').addEventListener('click', () => { authMode = authMode === 'in' ? 'up' : 'in'; $('#lockErr').textContent = ''; showAuth(); });
@@ -481,6 +512,7 @@ $('#authForm').addEventListener('submit', async e => {
   const email = $('#email').value.trim(), password = $('#acctPass').value;
   try {
     if (authMode === 'up') {
+      if (password !== $('#acctPass2').value) throw new Error('The two passwords do not match.');
       const {data, error} = await sb.auth.signUp({email, password, options: {emailRedirectTo: location.origin}});
       if (error) throw error;
       if (!data.session) { lockStatus('cloud', 'Check your email to confirm the account, then sign in.'); authMode = 'in'; showAuth(); lockStatus('cloud', 'Confirmation email sent to ' + email); return; }
@@ -489,8 +521,8 @@ $('#authForm').addEventListener('submit', async e => {
       const {data, error} = await sb.auth.signInWithPassword({email, password}); if (error) throw error;
       await afterSignIn(data.user);
     }
-  } catch (err) { $('#lockErr').textContent = err.message === 'Invalid login credentials' ? 'That email and password did not match an account.' : err.message; }
-  finally { $('#authBtn').disabled = false; $('#acctPass').value = ''; }
+  } catch (err) { $('#lockErr').textContent = err.message === 'Invalid login credentials' ? 'Wrong password for that email, or no account uses it yet. Check the password (tap Show), or use Forgot password.' : /not confirmed/i.test(err.message) ? 'Confirm your email first: open the link Supabase sent you.' : err.message; }
+  finally { $('#authBtn').disabled = false; $('#acctPass').value = ''; $('#acctPass2').value = ''; }
 });
 $('#signOutLink').addEventListener('click', async () => { await sb.auth.signOut(); CLOUD.ready = false; showAuth(); });
 async function afterSignIn(user){
