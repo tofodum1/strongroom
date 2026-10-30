@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#1F3D39">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%231F3D39' stroke='%23D6A651' stroke-width='3'/%3E%3Crect x='15' y='5' width='2' height='8' fill='%23D6A651'/%3E%3C/svg%3E">
+<title>Strongroom Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: steel sidebar (vault door) · ask-bar header · item grid · detail drawer sliding from the right */
+:root{
+  --bg:#EDF0EF; --surface:#F8FAF9; --raised:#FFFFFF; --ink:#14201E; --muted:#5B6966; --line:#D3DAD8;
+  --brass:#9A6C17; --brass-soft:#F1E6CF; --steel:#1F3D39; --steel-2:#2A4B46; --steel-ink:#E3ECEA; --steel-muted:#9FB6B1;
+  --danger:#B23A2E; --ok:#2E7D5B; --shadow:0 18px 50px -20px rgba(20,32,30,.35);
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1614; --surface:#15201E; --raised:#1A2725; --ink:#E4ECEA; --muted:#8FA19D; --line:#26332F;
+  --brass:#D6A651; --brass-soft:#3A2F1A; --steel:#0A1210; --steel-2:#14211E; --steel-ink:#D3DFDC; --steel-muted:#7F9591;
+  --danger:#E0705F; --ok:#5DBB8E; --shadow:0 18px 50px -20px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1614; --surface:#15201E; --raised:#1A2725; --ink:#E4ECEA; --muted:#8FA19D; --line:#26332F;
+  --brass:#D6A651; --brass-soft:#3A2F1A; --steel:#0A1210; --steel-2:#14211E; --steel-ink:#D3DFDC; --steel-muted:#7F9591;
+  --danger:#E0705F; --ok:#5DBB8E; --shadow:0 18px 50px -20px rgba(0,0,0,.7); color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--steel)}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--raised);padding:8px 14px;border-radius:8px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--brass)}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#1a1205}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#1a1205}}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- lock screen ---------- */
+#lock{min-height:100%;display:grid;place-items:center;background:var(--steel);color:var(--steel-ink);padding-block:40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lockcard{width:min(440px,100%);display:grid;gap:22px}
+.dial{width:132px;height:132px;border-radius:50%;margin:0 auto;position:relative;background:radial-gradient(circle at 50% 50%,var(--steel-2) 0 38%,transparent 39%),repeating-conic-gradient(from 0deg,var(--steel-muted) 0 1deg,transparent 1deg 10deg);border:2px solid var(--steel-muted);transition:transform 1.1s cubic-bezier(.2,.8,.2,1)}
+.dial::after{content:"";position:absolute;left:50%;top:6px;width:3px;height:22px;margin-left:-1.5px;background:var(--brass);border-radius:2px}
+.dial.spin{transform:rotate(270deg)}
+.lockcard h1{font-family:var(--f-display);font-size:clamp(30px,6vw,40px);line-height:1.05;margin:0;text-align:center;text-wrap:balance;letter-spacing:-.01em}
+.lockcard p{margin:0;text-align:center;color:var(--steel-muted)}
+.lockcard form{display:grid;gap:12px}
+.lockcard input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--steel-muted);background:var(--steel-2);color:var(--steel-ink)}
+.lockcard .btn{justify-content:center;padding:12px}
+.lockcard .demo{background:transparent;border-color:var(--steel-muted);color:var(--steel-ink)}
+.lockerr{color:#F09A8C;text-align:center;min-height:1.5em;margin:0}
+.lockstat{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:var(--steel-ink);margin:0}
+.lockstat i,.enc i{width:7px;height:7px;border-radius:50%;background:var(--steel-muted);display:inline-block;flex:none}
+.lockstat.cloud i,.enc.cloud i{background:var(--ok)}
+.lockstat.local i,.enc.local i{background:var(--brass)}
+.enc.busy i{background:var(--brass);animation:pulse 1s infinite alternate}
+@keyframes pulse{to{opacity:.3}}
+.meter{height:4px;border-radius:2px;background:var(--steel-2);overflow:hidden}
+.meter b{display:block;height:100%;background:var(--brass)}
+.linkbtn{background:none;border:0;color:var(--steel-muted);text-decoration:underline;text-underline-offset:3px;font-size:13px;padding:4px}
+.linkbtn:hover{color:var(--brass)}
+.lockfine{font-size:12px;color:var(--steel-muted);text-align:center;line-height:1.6}
+
+/* ---------- app shell ---------- */
+#app{height:100%;display:grid;grid-template-columns:248px 1fr;min-height:0}
+aside{background:var(--steel);color:var(--steel-ink);display:flex;flex-direction:column;gap:18px;padding-block:20px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:14px;overflow-y:auto;min-height:0}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:21px;font-weight:700;padding:0 6px}
+.brand .knob{width:26px;height:26px;border-radius:50%;border:2px solid var(--brass);position:relative}
+.brand .knob::after{content:"";position:absolute;left:50%;top:2px;width:2px;height:8px;margin-left:-1px;background:var(--brass)}
+.navlabel{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel-muted);padding:0 8px;display:flex;justify-content:space-between;align-items:center}
+.navlabel button{background:none;border:0;color:var(--steel-muted);padding:2px;display:flex}
+.navlabel button:hover{color:var(--brass)}
+nav{display:grid;gap:2px}
+.nv{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;color:var(--steel-ink);padding:7px 8px;border-radius:7px}
+.nv:hover{background:var(--steel-2)}
+.nv.on{background:var(--steel-2);box-shadow:inset 3px 0 0 var(--brass)}
+.nv .ct{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--steel-muted)}
+.nv span.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.nv.drop{outline:1px dashed var(--brass)}
+.sidefoot{margin-top:auto;display:grid;gap:8px;font-size:12px;color:var(--steel-muted);padding:0 6px}
+.sidefoot .btn{background:var(--steel-2);border-color:transparent;color:var(--steel-ink);justify-content:center}
+.enc{display:flex;align-items:center;gap:6px}
+
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.top{padding-block:18px 12px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px));display:grid;gap:12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.ask{display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:6px 6px 6px 14px;box-shadow:0 1px 0 var(--line)}
+.ask:focus-within{border-color:var(--brass)}
+.ask input{flex:1;min-width:0;border:0;background:none;padding:9px 0;font-size:16px;outline:none}
+.ask .k{font-family:var(--f-mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.hints{display:flex;gap:6px;flex-wrap:wrap}
+.hint{font-size:12px;border:1px solid var(--line);background:none;border-radius:999px;padding:3px 10px;color:var(--muted)}
+.hint:hover{color:var(--ink);border-color:var(--brass)}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:14px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px))}
+.crumbs{display:flex;align-items:center;gap:6px;min-width:0;flex:1;flex-wrap:wrap}
+.crumbs h2{font-family:var(--f-display);font-size:24px;margin:0;font-weight:700;letter-spacing:-.01em}
+.crumbs button{background:none;border:0;color:var(--muted);padding:0}
+.crumbs button:hover{color:var(--brass)}
+.crumbs .sub{color:var(--muted);font-size:13px;width:100%}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--raised);border:0;padding:7px 9px;color:var(--muted);display:flex}
+.seg button.on{color:var(--ink);background:var(--brass-soft)}
+.content{flex:1;overflow-y:auto;padding-block:4px 40px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px));position:relative;min-height:0}
+.content.dragging::after{content:"Drop to lock files in the vault";position:absolute;inset:8px 16px;border:2px dashed var(--brass);border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 85%,transparent);font-family:var(--f-display);font-size:22px;color:var(--brass)}
+
+.selbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--brass-soft);border:1px solid var(--brass);border-radius:10px;padding:8px 12px;margin-bottom:14px}
+.selbar b{margin-right:auto}
+.selbar .btn{padding:6px 10px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.card{position:relative;background:var(--raised);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--brass);transform:translateY(-1px)}
+.card.sel{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass)}
+.thumb{aspect-ratio:4/3;max-width:100%;background:var(--surface);display:grid;place-items:center;border-bottom:1px solid var(--line);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.glyph{width:54px;height:66px;border-radius:5px;background:var(--bg);border:1px solid var(--line);position:relative;display:grid;place-items:end center;padding-bottom:9px;font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--muted)}
+.glyph::before{content:"";position:absolute;right:-1px;top:-1px;width:15px;height:15px;background:var(--surface);border-left:1px solid var(--line);border-bottom:1px solid var(--line);border-bottom-left-radius:4px}
+.glyph.folder{width:66px;height:50px;border-radius:4px 10px 6px 6px;background:var(--brass-soft);border-color:var(--brass);color:var(--brass)}
+.glyph.folder::before{right:auto;left:-1px;top:-8px;width:28px;height:9px;background:var(--brass-soft);border:1px solid var(--brass);border-bottom:0;border-radius:4px 6px 0 0}
+.meta{padding:10px 12px;display:grid;gap:3px;min-width:0}
+.meta .n{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta .s{font-size:12px;color:var(--muted);display:flex;gap:8px;overflow:hidden;white-space:nowrap}
+.pin{display:inline-flex;align-items:center;gap:3px;color:var(--brass)}
+.pin svg{width:12px;height:12px}
+.chk{position:absolute;top:8px;left:8px;width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);background:var(--raised);display:grid;place-items:center;opacity:0;transition:opacity .12s}
+.card:hover .chk,.card.sel .chk,.grid.selecting .chk{opacity:1}
+.card.sel .chk{background:var(--brass);border-color:var(--brass);color:#fff}
+.chk svg{width:14px;height:14px}
+.score{position:absolute;top:8px;right:8px;font-family:var(--f-mono);font-size:10px;background:var(--raised);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--brass)}
+.why{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.why span{font-size:10.5px;background:var(--brass-soft);color:var(--brass);border-radius:4px;padding:0 5px}
+
+.list{display:grid;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--raised)}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) 140px 90px 110px;gap:12px;align-items:center;padding:9px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface)}
+.row.sel{background:var(--brass-soft)}
+.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.row .c{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rowico{width:24px;height:24px;border-radius:5px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--f-mono);font-size:8px;color:var(--muted);overflow:hidden}
+.rowico img{width:100%;height:100%;object-fit:cover}
+.rowico.f{background:var(--brass-soft);border-color:var(--brass);color:var(--brass)}
+
+.sect{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.sect::after{content:"";flex:1;height:1px;background:var(--line)}
+.sect:first-child{margin-top:4px}
+
+.empty{display:grid;place-items:center;text-align:center;gap:10px;padding:60px 20px;color:var(--muted)}
+.empty h3{font-family:var(--f-display);color:var(--ink);font-size:22px;margin:0}
+.empty p{max-width:42ch;margin:0}
+
+/* places */
+.map{position:relative;background:var(--raised);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.map canvas{display:block;width:100%;height:260px}
+.map .legend{position:absolute;left:12px;bottom:10px;font-family:var(--f-mono);font-size:11px;color:var(--muted);background:var(--raised);padding:2px 8px;border-radius:5px;border:1px solid var(--line)}
+.places{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.place{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;display:grid;gap:10px}
+.place:hover{border-color:var(--brass)}
+.place h4{margin:0;font-family:var(--f-display);font-size:18px;display:flex;gap:8px;align-items:center}
+.place h4 svg{color:var(--brass)}
+.place .co{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.strip{display:flex;gap:6px}
+.strip > div{width:44px;height:44px;border-radius:7px;background:var(--surface);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-family:var(--f-mono);font-size:9px;color:var(--muted)}
+.strip img{width:100%;height:100%;object-fit:cover}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,18,16,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;display:flex;flex-direction:column;box-shadow:var(--shadow);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);animation:slide .22s ease-out}
+@keyframes slide{from{transform:translateX(30px);opacity:.4}}
+.dhead{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dhead h3{margin:0;font-family:var(--f-display);font-size:19px;flex:1;min-width:0;overflow-wrap:anywhere}
+.iconbtn{background:none;border:1px solid transparent;border-radius:8px;padding:6px;display:flex;color:var(--muted)}
+.iconbtn:hover{color:var(--ink);border-color:var(--line)}
+.dbody{flex:1;overflow-y:auto;padding:18px;display:grid;gap:18px;align-content:start}
+.preview{border-radius:12px;background:var(--bg);border:1px solid var(--line);min-height:160px;display:grid;place-items:center;overflow:hidden}
+.preview img{max-height:340px;width:100%;object-fit:contain}
+.preview pre{margin:0;padding:14px;font-family:var(--f-mono);font-size:12px;white-space:pre-wrap;max-height:260px;overflow:auto;width:100%;align-self:start}
+.field{display:grid;gap:6px}
+.field > label,.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--raised);border-radius:8px;padding:8px 10px}
+.field textarea{min-height:70px;resize:vertical}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-family:var(--f-mono);font-size:12.5px;overflow-wrap:anywhere}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;background:var(--brass-soft);color:var(--brass);border-radius:999px;padding:2px 10px}
+.dfoot{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line)}
+.callout{border:1px solid var(--brass);background:var(--brass-soft);border-radius:10px;padding:12px;display:grid;gap:8px;font-size:13px}
+.callout b{color:var(--brass)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(10,18,16,.45);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.mbox{width:min(560px,100%);max-height:100%;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px;display:grid;gap:16px}
+.mbox h3{margin:0;font-family:var(--f-display);font-size:22px}
+.mbox p{margin:0;color:var(--muted)}
+.flist{display:grid;gap:4px;max-height:150px;overflow:auto;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--raised)}
+.flist div{display:flex;justify-content:space-between;gap:10px}
+.flist span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mact{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.check{display:flex;align-items:flex-start;gap:8px;font-size:13px}
+.check input{margin-top:3px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:40;font-size:13.5px;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.demoband{background:var(--brass-soft);color:var(--brass);font-size:12.5px;padding:6px 24px;border-bottom:1px solid var(--line)}
+.mobtop{display:none}
+
+@media (max-width:820px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  aside{display:none}
+  aside.open{display:flex;position:fixed;inset:0 auto 0 0;width:min(300px,86%);z-index:25;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+  .mobtop{display:flex;align-items:center;gap:10px;background:var(--steel);color:var(--steel-ink);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .mobtop .brand{font-size:18px;flex:1}
+  .mobtop .iconbtn{color:var(--steel-ink)}
+  .top,.bar,.content{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .demoband{padding-left:16px;padding-right:16px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .row{grid-template-columns:28px minmax(0,1fr) 80px}
+  .row .c.hide{display:none}
+  .ask .k{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}html,body{height:100%}#app{height:100%}</style>
+<script src="/config.js"></script>
+<script src="/vendor/supabase.js"></script>
+</head>
+<body>
+
+
+<div id="lock">
+  <div class="lockcard">
+    <div class="dial" id="dial" aria-hidden="true"></div>
+    <h1 id="lockTitle">Strongroom</h1>
+    <p id="lockSub">Your private vault for documents, photos and files.</p>
+    <form id="authForm">
+      <input id="email" type="email" placeholder="Email" aria-label="Email" autocomplete="username" required>
+      <input id="acctPass" type="password" placeholder="Account password" aria-label="Account password" autocomplete="current-password" required minlength="8">
+      <button class="btn primary" id="authBtn" type="submit">Sign in</button>
+      <button class="linkbtn" id="authSwap" type="button">New here? Create an account</button>
+    </form>
+    <form id="lockForm" autocomplete="off" hidden>
+      <input id="pass" type="password" placeholder="Vault passphrase" aria-label="Vault passphrase" required minlength="6">
+      <input id="pass2" type="password" placeholder="Repeat passphrase" aria-label="Repeat passphrase" hidden>
+      <button class="btn primary" id="lockBtn" type="submit">Unlock</button>
+      <button class="linkbtn" id="signOutLink" type="button" hidden>Use a different account</button>
+    </form>
+    <p class="lockerr" id="lockErr" role="alert"></p>
+    <button class="btn demo" id="demoBtn" type="button">Explore a demo vault</button>
+    <p class="lockstat" id="lockStat"><i></i><span>Connecting…</span></p>
+    <p class="lockfine">Two locks: your account password signs you in, and your vault passphrase encrypts every file with AES-256 on your device before it reaches the cloud. The server only ever holds scrambled data. The vault passphrase is never sent and cannot be reset.</p>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <div class="mobtop">
+    <button class="iconbtn" id="menuBtn" aria-label="Open menu"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="brand"><span class="knob"></span>Strongroom</div>
+    <button class="iconbtn" id="lockBtnM" aria-label="Lock vault"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+  </div>
+  <aside id="side"></aside>
+  <main>
+    <div id="demoband" class="demoband" hidden>Demo vault · example items only · nothing here is saved</div>
+    <div class="top">
+      <form class="ask" id="askForm">
+        <svg class="i" viewBox="0 0 24 24" style="color:var(--brass)"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+        <input id="q" type="search" placeholder="Ask your vault: “car insurance from 2025” or “photos at Savannah”" aria-label="Ask your vault" autocomplete="off">
+        <span class="k">/</span>
+        <button class="btn primary" type="submit">Find</button>
+      </form>
+      <div class="hints" id="hints"></div>
+    </div>
+    <div class="bar">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="seg" role="group" aria-label="Layout">
+        <button id="lgGrid" class="on" aria-label="Grid"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+        <button id="lgList" aria-label="List"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></button>
+      </div>
+      <button class="btn" id="newFolder"><svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5h5"/></svg>Folder</button>
+      <button class="btn primary" id="uploadBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Add files</button>
+      <input type="file" id="fileIn" multiple hidden>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+<div id="layer"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const enc = new TextEncoder(), dec = new TextDecoder();
+const ICON = {
+  all:'<path d="M4 5h16v14H4z"/><path d="M4 10h16"/>',
+  recent:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+  photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8 8"/>',
+  doc:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+  place:'<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6 6 18"/>', check:'<path d="m5 12 4.5 4.5L19 7"/>',
+  lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  down:'<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>', trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>'
+};
+const ic = (n, cls='i') => `<svg class="${cls}" viewBox="0 0 24 24">${ICON[n]}</svg>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => crypto.getRandomValues(new Uint32Array(2)).join('').slice(0,14) + Date.now().toString(36);
+const fmtSize = b => b == null ? '—' : b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(0) + ' KB' : (b/1048576).toFixed(1) + ' MB';
+const fmtDate = t => new Date(t).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+const extOf = n => (n.match(/\.([a-z0-9]{1,5})$/i)||[])[1]?.toLowerCase() || '';
+const isImg = it => /^image\//.test(it.mime||'') || /^(jpe?g|png|gif|webp|heic|bmp|svg)$/.test(extOf(it.name));
+const toast = (msg) => { const t = document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2600); };
+
+/* ================= storage + crypto ================= */
+let idb = null, KEY = null, DEMO = false;
+function openDB(uid){ return new Promise((res, rej) => { const r = indexedDB.open('strongroom-' + uid, 1);
+  r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('meta'); d.createObjectStore('records', {keyPath:'id'}); };
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function tx(store, mode, fn){ return new Promise((res, rej) => { const t = idb.transaction(store, mode); const s = t.objectStore(store); const out = fn(s);
+  t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); }
+const metaGet = k => tx('meta','readonly', s => s.get(k));
+const metaPut = (k,v) => tx('meta','readwrite', s => s.put(v,k));
+const recGetAll = () => tx('records','readonly', s => s.getAll());
+const recGet = id => tx('records','readonly', s => s.get(id));
+const recPut = r => tx('records','readwrite', s => s.put(r));
+const recDel = id => tx('records','readwrite', s => s.delete(id));
+async function derive(pass, salt){ const base = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:310000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+async function seal(buf){ const iv = crypto.getRandomValues(new Uint8Array(12)); const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, KEY, buf); return {iv, ct}; }
+const open_ = (iv, ct) => crypto.subtle.decrypt({name:'AES-GCM', iv}, KEY, ct);
+
+/* ---------- encoding helpers ---------- */
+const toB64 = u8 => { u8 = u8 instanceof Uint8Array ? u8 : new Uint8Array(u8); let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const fromB64 = s => { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+const sameBytes = (a, b) => { if (!a || !b) return false; a = new Uint8Array(a); b = new Uint8Array(b); if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+
+/* ---------- Supabase ---------- */
+const CFG = window.STRONGROOM_CONFIG || {};
+const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {auth: {persistSession: true, autoRefreshToken: true}});
+const CLOUD = {ready:false, uid:null, email:'', docs:new Map(), channel:null};
+const BUCKET = 'vault', FREE_BYTES = 1024 ** 3, MAX_FILE = 50 * 1024 * 1024;
+async function pushRec(rec, blobChanged){
+  if (!CLOUD.ready) { await addPending(rec.id); return; }
+  setSync('busy');
+  try {
+    const prev = CLOUD.docs.get(rec.id);
+    const row = {user_id: CLOUD.uid, id: rec.id, iv: toB64(rec.iv), meta: toB64(rec.meta), t: Date.now(),
+                 biv: prev ? prev.biv : null, blob_path: prev ? prev.blob_path : null, blob_size: prev ? prev.blob_size : null};
+    if (rec.blob && (blobChanged || !prev || !prev.blob_path)) {
+      if (rec.blob.byteLength > MAX_FILE) throw {code:'too_big'};
+      const path = `${CLOUD.uid}/${rec.id}`;
+      const up = await sb.storage.from(BUCKET).upload(path, new Blob([rec.blob], {type:'application/octet-stream'}), {upsert: true, contentType: 'application/octet-stream'});
+      if (up.error) throw up.error;
+      row.biv = toB64(rec.biv); row.blob_path = path; row.blob_size = rec.blob.byteLength;
+    }
+    const {error} = await sb.from('vault_records').upsert(row, {onConflict: 'user_id,id'});
+    if (error) throw error;
+    CLOUD.docs.set(rec.id, row); seen.set(rec.id, row.t);
+    await removePending(rec.id); setSync('ok'); refreshUsage();
+  } catch (e) {
+    await addPending(rec.id); setSync('err');
+    toast(e && e.code === 'too_big' ? 'Files over 50 MB stay on this device only (Supabase free plan limit).' : 'Saved on this device. Cloud sync will retry next time you unlock.');
+  }
+}
+async function pushDelete(id){
+  if (!CLOUD.ready) return; const prev = CLOUD.docs.get(id);
+  const {error} = await sb.from('vault_records').delete().eq('user_id', CLOUD.uid).eq('id', id);
+  if (error) { toast('Removed here. Could not reach the cloud copy; try again later.'); return; }
+  CLOUD.docs.delete(id); seen.delete(id);
+  if (prev && prev.blob_path) await sb.storage.from(BUCKET).remove([prev.blob_path]);
+  refreshUsage();
+}
+async function getPending(){ try { return (await metaGet('pending')) || []; } catch { return []; } }
+async function addPending(id){ const p = await getPending(); if (!p.includes(id)) { p.push(id); await metaPut('pending', p); } }
+async function removePending(id){ const p = await getPending(); if (p.includes(id)) await metaPut('pending', p.filter(x => x !== id)); }
+async function flushPending(){
+  if (!CLOUD.ready) return; const p = await getPending();
+  for (const id of p) { const rec = await recGet(id); if (rec) await pushRec(rec, true); else await removePending(id); }
+}
+let syncState = 'off';
+function setSync(s){ syncState = s; const el = document.getElementById('syncChip'); if (el) renderSyncChip(el); }
+function renderSyncChip(el){
+  const map = {ok:['cloud','Synced'], busy:['busy','Syncing…'], err:['local','Some files waiting to sync'], off:['local','Offline · this device only']};
+  const [cls, txt] = DEMO ? ['local','Demo · not saved'] : (map[syncState] || map.off);
+  el.className = 'enc ' + cls; el.innerHTML = `<i></i>${txt}`;
+}
+let usage = null;
+function refreshUsage(){ if (!CLOUD.ready) return; let b = 0; CLOUD.docs.forEach(d => b += d.blob_size || 0); usage = {bytes: b, maxBytes: FREE_BYTES}; const m = document.getElementById('meterBox'); if (m) m.innerHTML = meterHTML(); }
+const meterHTML = () => usage ? `<div class="meter"><b style="width:${Math.min(100, 100*usage.bytes/usage.maxBytes).toFixed(1)}%"></b></div><span class="mono">${fmtSize(usage.bytes)} of 1 GB (free plan)</span>${CLOUD.email ? `<span style="overflow:hidden;text-overflow:ellipsis">${esc(CLOUD.email)}</span>` : ''}` : '';
+
+/* ---------- in-memory decrypted catalog ---------- */
+let items = new Map(), places = new Map(), blobCache = new Map(), seen = new Map();
+async function persist(obj, buf){
+  if (DEMO) return;
+  const m = await seal(enc.encode(JSON.stringify(obj)));
+  const rec = {id: obj.id, iv: m.iv, meta: m.ct};
+  if (buf !== undefined) { const b = await seal(buf); rec.biv = b.iv; rec.blob = b.ct; }
+  else { const old = await recGet(obj.id); if (old && old.blob) { rec.biv = old.biv; rec.blob = old.blob; } }
+  await recPut(rec);
+  await pushRec(rec, buf !== undefined);
+}
+async function ingestRow(d){
+  if (!d || !d.iv || seen.get(d.id) === Number(d.t)) return false;
+  try {
+    const o = JSON.parse(dec.decode(await open_(fromB64(d.iv), fromB64(d.meta).buffer)));
+    const prev = CLOUD.docs.get(d.id);
+    if (prev && prev.biv !== d.biv) { blobCache.delete(d.id); const r = await recGet(d.id); if (r) { delete r.blob; delete r.biv; await recPut(r); } }
+    CLOUD.docs.set(d.id, d); seen.set(d.id, Number(d.t));
+    (o.kind === 'place' ? places : items).set(o.id, o); return true;
+  } catch { return false; }
+}
+async function fetchAllRows(){
+  const rows = []; for (let from = 0; ; from += 1000) {
+    const {data, error} = await sb.from('vault_records').select('*').eq('user_id', CLOUD.uid).order('id').range(from, from + 999);
+    if (error) throw error; rows.push(...data); if (data.length < 1000) break; }
+  return rows;
+}
+async function loadAll(){
+  items.clear(); places.clear(); seen.clear(); CLOUD.docs.clear();
+  for (const r of await recGetAll()) { try { const o = JSON.parse(dec.decode(await open_(r.iv, r.meta))); (o.kind === 'place' ? places : items).set(o.id, o); } catch {} }
+  if (!CLOUD.ready) return;
+  const rows = await fetchAllRows(); const ids = new Set();
+  for (const d of rows) { ids.add(d.id); await ingestRow(d); }
+  const pend = new Set(await getPending());
+  for (const r of await recGetAll()) if (!ids.has(r.id) && !pend.has(r.id)) { items.delete(r.id); places.delete(r.id); await recDel(r.id); }
+  refreshUsage();
+}
+function watchCloud(){
+  if (!CLOUD.ready || CLOUD.channel) return;
+  const redraw = () => { if (!$('#app').hidden) { renderSide(); renderHints(); if (!$('#layer').innerHTML) renderMain(); } };
+  CLOUD.channel = sb.channel('vault-' + CLOUD.uid)
+    .on('postgres_changes', {event:'*', schema:'public', table:'vault_records', filter:`user_id=eq.${CLOUD.uid}`}, async p => {
+      if (p.eventType === 'DELETE') { const id = p.old && p.old.id; if (id && CLOUD.docs.has(id)) { CLOUD.docs.delete(id); seen.delete(id); items.delete(id); places.delete(id); blobCache.delete(id); recDel(id).catch(()=>{}); refreshUsage(); redraw(); } }
+      else if (await ingestRow(p.new)) { refreshUsage(); redraw(); }
+    }).subscribe();
+}
+async function getBlob(it){
+  if (blobCache.has(it.id)) return blobCache.get(it.id);
+  if (DEMO) return null;
+  let r = await recGet(it.id), plain = null;
+  if (r && r.blob) plain = await open_(r.biv, r.blob);
+  else if (CLOUD.ready) {
+    const d = CLOUD.docs.get(it.id); if (!d || !d.blob_path) return null;
+    const {data, error} = await sb.storage.from(BUCKET).download(d.blob_path); if (error) throw error;
+    const ct = await data.arrayBuffer(), biv = fromB64(d.biv);
+    plain = await open_(biv, ct);
+    r = r || {id: it.id, iv: fromB64(d.iv), meta: fromB64(d.meta).buffer}; r.biv = biv; r.blob = ct; await recPut(r).catch(()=>{});
+  }
+  if (!plain) return null;
+  const b = new Blob([plain], {type: it.mime || 'application/octet-stream'}); blobCache.set(it.id, b); return b;
+}
+
+/* ================= sign-in, then vault unlock ================= */
+let setupMode = false, cloudMeta = null, localMeta = null, authMode = 'in';
+function lockStatus(cls, txt){ const el = $('#lockStat'); el.className = 'lockstat ' + cls; el.querySelector('span').textContent = txt; }
+function showStep(step){ $('#authForm').hidden = step !== 'auth'; $('#lockForm').hidden = step !== 'vault'; $('#signOutLink').hidden = step !== 'vault'; }
+async function boot(){
+  if (!CFG.supabaseUrl || !window.supabase) { $('#lockErr').textContent = 'The site is missing its Supabase settings. Check config.js.'; return; }
+  const {data} = await sb.auth.getSession();
+  if (data.session) await afterSignIn(data.session.user); else showAuth();
+}
+function showAuth(){
+  showStep('auth'); $('#lockTitle').textContent = 'Strongroom';
+  $('#lockSub').textContent = authMode === 'in' ? 'Sign in to your vault account.' : 'Create an account. Your vault passphrase comes next and stays separate.';
+  $('#authBtn').textContent = authMode === 'in' ? 'Sign in' : 'Create account';
+  $('#authSwap').textContent = authMode === 'in' ? 'New here? Create an account' : 'Have an account? Sign in';
+  lockStatus('', 'Step 1 of 2 · account'); setTimeout(() => $('#email').focus(), 50);
+}
+$('#authSwap').addEventListener('click', () => { authMode = authMode === 'in' ? 'up' : 'in'; $('#lockErr').textContent = ''; showAuth(); });
+$('#authForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('#lockErr').textContent = ''; $('#authBtn').disabled = true;
+  const email = $('#email').value.trim(), password = $('#acctPass').value;
+  try {
+    if (authMode === 'up') {
+      const {data, error} = await sb.auth.signUp({email, password, options: {emailRedirectTo: location.origin}});
+      if (error) throw error;
+      if (!data.session) { lockStatus('cloud', 'Check your email to confirm the account, then sign in.'); authMode = 'in'; showAuth(); lockStatus('cloud', 'Confirmation email sent to ' + email); return; }
+      await afterSignIn(data.user);
+    } else {
+      const {data, error} = await sb.auth.signInWithPassword({email, password}); if (error) throw error;
+      await afterSignIn(data.user);
+    }
+  } catch (err) { $('#lockErr').textContent = err.message === 'Invalid login credentials' ? 'That email and password did not match an account.' : err.message; }
+  finally { $('#authBtn').disabled = false; $('#acctPass').value = ''; }
+});
+$('#signOutLink').addEventListener('click', async () => { await sb.auth.signOut(); CLOUD.ready = false; showAuth(); });
+async function afterSignIn(user){
+  CLOUD.uid = user.id; CLOUD.email = user.email || ''; CLOUD.ready = true;
+  try { idb = await openDB(user.id); } catch { idb = null; }
+  showStep('vault'); await initLock();
+}
+async function initLock(){
+  $('#lockBtn').disabled = true; cloudMeta = null; localMeta = null; lockStatus('', 'Checking your vault…');
+  try { if (idb) { const v = await metaGet('verifier'); if (v) localMeta = {salt: await metaGet('salt'), verifier: v}; } } catch {}
+  try { const {data, error} = await sb.from('vault_meta').select('*').eq('user_id', CLOUD.uid).maybeSingle(); if (error) throw error;
+        if (data) cloudMeta = {salt: fromB64(data.salt), verifier: {iv: fromB64(data.viv), ct: fromB64(data.vct).buffer}}; CLOUD.ready = true; }
+  catch { CLOUD.ready = false; }
+  setupMode = !cloudMeta && !localMeta;
+  lockStatus(CLOUD.ready ? 'cloud' : 'local', CLOUD.ready ? `Step 2 of 2 · signed in as ${CLOUD.email}` : 'Offline · opening the copy on this device');
+  $('#pass2').hidden = !setupMode;
+  $('#lockTitle').textContent = setupMode ? 'Set your vault passphrase' : 'Unlock your vault';
+  $('#lockSub').textContent = setupMode ? 'This passphrase encrypts every file on your device. It is never sent anywhere, and it cannot be reset.' : 'Enter your vault passphrase.';
+  $('#lockBtn').textContent = setupMode ? 'Create vault' : 'Unlock';
+  $('#lockBtn').disabled = !idb;
+  setTimeout(() => $('#pass').focus(), 50);
+}
+async function writeCloudMeta(salt, v){ const {error} = await sb.from('vault_meta').upsert({user_id: CLOUD.uid, salt: toB64(salt), viv: toB64(v.iv), vct: toB64(v.ct)}); if (error) throw error; }
+async function tryKey(pass, meta){ const k = await derive(pass, meta.salt); try { await crypto.subtle.decrypt({name:'AES-GCM', iv: meta.verifier.iv}, k, meta.verifier.ct); return k; } catch { return null; } }
+$('#lockForm').addEventListener('submit', async e => {
+  e.preventDefault(); const p = $('#pass').value; $('#lockErr').textContent = '';
+  if (!idb) return; $('#lockBtn').disabled = true;
+  const say = t => lockStatus(CLOUD.ready ? 'cloud' : 'local', t);
+  const bad = () => { $('#lockErr').textContent = 'That passphrase did not open the vault. Check it and try again.'; $('#lockBtn').disabled = false; };
+  try {
+    let firstSync = false;
+    if (setupMode) {
+      if (p !== $('#pass2').value) { $('#lockErr').textContent = 'The two passphrases do not match.'; $('#lockBtn').disabled = false; return; }
+      const salt = crypto.getRandomValues(new Uint8Array(16)); KEY = await derive(p, salt);
+      const v = await seal(enc.encode('strongroom-ok')); await metaPut('salt', salt); await metaPut('verifier', v);
+      if (CLOUD.ready) await writeCloudMeta(salt, v);
+    } else if (cloudMeta) {
+      say('Opening…'); KEY = await tryKey(p, cloudMeta); if (!KEY) return bad();
+      if (!localMeta || !sameBytes(localMeta.salt, cloudMeta.salt)) {
+        for (const r of await recGetAll()) await recDel(r.id); await metaPut('pending', []);
+        await metaPut('salt', cloudMeta.salt); await metaPut('verifier', cloudMeta.verifier);
+      }
+    } else {
+      say('Opening…'); KEY = await tryKey(p, localMeta); if (!KEY) return bad();
+      if (CLOUD.ready) { await writeCloudMeta(localMeta.salt, localMeta.verifier); firstSync = true; }
+    }
+    $('#dial').classList.add('spin');
+    if (firstSync) { const all = await recGetAll(); await metaPut('pending', all.map(r => r.id)); }
+    say('Loading your files…'); await loadAll(); DEMO = false;
+    setSync(CLOUD.ready ? 'ok' : 'off'); enterApp();
+    if (CLOUD.ready) { watchCloud(); flushPending(); }
+  } catch(err) { $('#lockErr').textContent = 'Could not open the vault: ' + (err.message || err); $('#lockBtn').disabled = false; }
+});
+$('#demoBtn').addEventListener('click', () => { DEMO = true; seedDemo(); $('#dial').classList.add('spin'); setTimeout(enterApp, 500); });
+function enterApp(){ $('#pass').value = ''; $('#pass2').value=''; $('#lock').hidden = true; $('#app').hidden = false; $('#demoband').hidden = !DEMO; render(); armIdle(); }
+function lockNow(){ if (CLOUD.channel) { sb.removeChannel(CLOUD.channel); CLOUD.channel = null; } const wasDemo = DEMO; KEY = null; items.clear(); places.clear(); blobCache.clear(); seen.clear(); CLOUD.docs.clear(); revokeAll(); DEMO = false; closeLayer();
+  $('#app').hidden = true; $('#lock').hidden = false; $('#dial').classList.remove('spin'); view = {type:'all'}; results = null; $('#q').value='';
+  if (CLOUD.uid && !wasDemo) { showStep('vault'); initLock(); } else boot(); }
+let idleT; function armIdle(){ clearTimeout(idleT); idleT = setTimeout(() => { if (!$('#app').hidden) { lockNow(); } }, 10*60*1000); }
+['pointerdown','keydown'].forEach(ev => document.addEventListener(ev, () => { if (!$('#app').hidden) armIdle(); }, {passive:true}));
+
+/* ================= demo data ================= */
+function seedDemo(){
+  items.clear(); places.clear();
+  const P = (name, lat, lon) => { const id = uid(); places.set(id, {id, kind:'place', name, lat, lon}); return id; };
+  const pH = P('Home office · Charleston', 32.7765, -79.9311), pB = P('Safe deposit box · Downtown', 32.7830, -79.9370),
+        pS = P('Family house · Savannah', 32.0809, -81.0912), pM = P('Miami trip', 25.7617, -80.1918);
+  const F = (name, parent=null) => { const id = uid(); items.set(id, {id, kind:'folder', name, parent, added: Date.now()-8e9}); return id; };
+  const fId = F('Identity'), fFin = F('Finance'), fTax = F('Taxes', fFin), fProp = F('Property'), fCar = F('Vehicle'), fMed = F('Medical'), fTr = F('Travel');
+  const day = 864e5, now = Date.now();
+  const I = (name, parent, mime, size, ago, tags, note, place, text) => { const id = uid(); items.set(id, {id, kind:'file', name, parent, mime, size, added: now-ago*day, tags, note, placeId: place||null, text: text||'', demo:true}); };
+  I('Passport scan.pdf', fId, 'application/pdf', 812e3, 120, ['passport','id','travel'], 'Expires March 2031', pB);
+  I('Driver license front.jpg', fId, 'image/jpeg', 2.1e6, 95, ['license','id'], '', pB);
+  I('Birth certificate.pdf', fId, 'application/pdf', 640e3, 300, ['certificate','id'], 'Certified copy, original in deposit box', pB);
+  I('W-2 2025.pdf', fTax, 'application/pdf', 220e3, 230, ['tax','w2','2025'], '', pH);
+  I('1099-NEC 2025.pdf', fTax, 'application/pdf', 180e3, 228, ['tax','1099','2025'], 'Trading and contract income', pH);
+  I('Bank statement Sept 2026.pdf', fFin, 'application/pdf', 410e3, 30, ['bank','statement'], '', pH);
+  I('House deed.pdf', fProp, 'application/pdf', 1.3e6, 400, ['deed','house','property'], 'Recorded with the county', pS);
+  I('Front porch.jpg', fProp, 'image/jpeg', 3.4e6, 60, ['house','photo'], 'Before repainting', pS);
+  I('Home insurance policy 2026.pdf', fProp, 'application/pdf', 950e3, 75, ['insurance','house','policy'], 'Renews every June', pS);
+  I('Car title.pdf', fCar, 'application/pdf', 300e3, 500, ['car','title','vehicle'], '', pB);
+  I('Car insurance card 2025.pdf', fCar, 'application/pdf', 120e3, 260, ['car','insurance','2025'], '', pH);
+  I('Registration renewal.txt', fCar, 'text/plain', 2e3, 20, ['car','registration'], '', pH, 'Vehicle registration renewed through October 2027. Confirmation number on file.');
+  I('Vaccination record.pdf', fMed, 'application/pdf', 260e3, 150, ['medical','vaccine'], '', pH);
+  I('Lab results summary.txt', fMed, 'text/plain', 4e3, 40, ['medical','lab'], 'Annual checkup', pH, 'Annual checkup lab summary. All values within normal range.');
+  I('Beach sunset.jpg', fTr, 'image/jpeg', 4.2e6, 14, ['photo','beach'], '', pM);
+  I('Hotel booking receipt.pdf', fTr, 'application/pdf', 90e3, 16, ['receipt','hotel'], 'Paid in full', pM);
+  I('Boarding pass.png', fTr, 'image/png', 600e3, 15, ['flight','travel'], '', pM);
+  I('Wi-Fi and alarm codes.txt', null, 'text/plain', 1e3, 5, ['home','codes'], 'Keep updated', pH, 'Router admin and alarm panel notes.');
+  I('Will and testament.pdf', null, 'application/pdf', 700e3, 600, ['will','legal','estate'], 'Signed and notarized', pB);
+}
+
+/* ================= helpers on the catalog ================= */
+const files = () => [...items.values()].filter(i => i.kind === 'file');
+const folders = () => [...items.values()].filter(i => i.kind === 'folder');
+const childrenOf = pid => [...items.values()].filter(i => (i.parent||null) === (pid||null));
+function folderPath(id){ const out = []; let cur = id && items.get(id); while (cur) { out.unshift(cur); cur = cur.parent && items.get(cur.parent); } return out; }
+function descendantsCount(fid){ let n = 0; for (const c of childrenOf(fid)) n += c.kind === 'folder' ? descendantsCount(c.id) : 1; return n; }
+function hav(a, b){ const R = 6371, r = x => x*Math.PI/180; const dLa = r(b.lat-a.lat), dLo = r(b.lon-a.lon);
+  const h = Math.sin(dLa/2)**2 + Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function nearestPlace(pt, km=1){ let best = null, bd = Infinity; for (const p of places.values()) { if (p.lat == null) continue; const d = hav(pt, p); if (d < bd) { bd = d; best = p; } } return bd <= km ? best : null; }
+const placeOf = it => it.placeId ? places.get(it.placeId) : null;
+const fmtCo = p => p && p.lat != null ? `${p.lat.toFixed(4)}°, ${p.lon.toFixed(4)}°` : 'No coordinates';
+const typeLabel = it => (extOf(it.name) || (it.mime||'file').split('/').pop()).toUpperCase().slice(0,4);
+
+/* ================= retrieval engine ================= */
+const STOP = new Set('a an the of for to in on at my me i all any show find get give where is are was with from and or please file files doc that this those these some'.split(' '));
+const SYN = {receipt:['invoice','bill','purchase','paid'], invoice:['receipt','bill'], bill:['invoice','receipt','statement'],
+  id:['passport','license','licence','identity','identification','certificate'], identity:['id','passport','license'], passport:['id','travel'], license:['id','licence','driver'],
+  contract:['agreement','lease','nda','signed'], agreement:['contract'], lease:['contract','rental','apartment'],
+  tax:['taxes','irs','w2','1099','return'], taxes:['tax'], insurance:['policy','coverage','insured'], policy:['insurance'],
+  medical:['health','doctor','lab','vaccine','hospital'], health:['medical'], car:['vehicle','auto','title','registration'], vehicle:['car','auto'],
+  bank:['statement','account','finance'], money:['bank','finance','statement','tax'], house:['home','property','deed','mortgage'], home:['house','property'],
+  legal:['will','estate','contract','deed'], trip:['travel','flight','hotel','vacation'], travel:['trip','flight','passport','hotel','boarding'], vacation:['trip','travel','beach']};
+const KIND_WORDS = {photos:'image',photo:'image',pictures:'image',picture:'image',pics:'image',pic:'image',images:'image',image:'image',screenshots:'image',
+  pdf:'pdf',pdfs:'pdf',documents:'doc',document:'doc',docs:'doc',notes:'text',text:'text'};
+const tokenize = s => String(s||'').toLowerCase().replace(/[_\-\.]/g,' ').match(/[a-z0-9]+/g) || [];
+function lev1(a, b){ if (Math.abs(a.length-b.length) > 1) return false; let i=0,j=0,e=0; while(i<a.length&&j<b.length){ if(a[i]===b[j]){i++;j++;continue;} if(++e>1) return false; if(a.length>b.length) i++; else if(b.length>a.length) j++; else {i++;j++;} } return e + (a.length-i) + (b.length-j) <= 1; }
+function fieldsOf(it){ const p = placeOf(it); const fp = folderPath(it.parent).map(f=>f.name).join(' ');
+  return [ [tokenize(it.name), 3, 'name'], [(it.tags||[]).flatMap(tokenize), 3, 'tag'], [tokenize(it.note), 2, 'note'],
+           [tokenize(fp), 2, 'folder'], [tokenize(p && p.name), 2.2, 'place'], [tokenize(it.text).slice(0, 4000), 1, 'content'] ]; }
+function parseQuery(q){
+  let s = q.toLowerCase(); const f = {kind:null, since:null, year:null, placeIds:null};
+  const now = Date.now(), d = 864e5;
+  if (/\btoday\b/.test(s)) f.since = now - d; else if (/\b(this|past|last) week\b/.test(s)) f.since = now - 7*d;
+  else if (/\b(this|past|last) month\b/.test(s)) f.since = now - 31*d; else if (/\b(this|past|last) year\b/.test(s)) f.since = now - 366*d;
+  else if (/\brecent(ly)?\b/.test(s)) f.since = now - 30*d;
+  s = s.replace(/\b(today|recent(ly)?|(this|past|last) (week|month|year))\b/g, ' ');
+  const near = s.match(/\b(?:near|at|in|from)\s+([a-z][a-z\s]{2,40})$/);
+  if (near) { const t = tokenize(near[1]).filter(w=>!STOP.has(w)); const hit = [...places.values()].filter(p => t.some(w => tokenize(p.name).some(pw => pw.startsWith(w) || lev1(pw,w))));
+    if (hit.length) { f.placeIds = new Set(hit.map(p=>p.id)); s = s.replace(near[0], ' '); } }
+  const toks = []; for (const w of tokenize(s)) { if (STOP.has(w)) continue; if (KIND_WORDS[w]) { f.kind = KIND_WORDS[w]; continue; } toks.push(w); }
+  return {toks, f};
+}
+function kindOk(it, k){ if (!k) return true; if (k === 'image') return isImg(it); if (k === 'pdf') return extOf(it.name) === 'pdf';
+  if (k === 'text') return /^text\//.test(it.mime||'') || /^(txt|md|csv|json)$/.test(extOf(it.name)); return !isImg(it); }
+function search(q){
+  const {toks, f} = parseQuery(q); const pool = files().filter(it => kindOk(it, f.kind) && (!f.since || it.added >= f.since) && (!f.placeIds || f.placeIds.has(it.placeId)));
+  if (!toks.length) return pool.map(it => ({it, score:1, why: whyFilters(f)})).sort((a,b)=>b.it.added-a.it.added);
+  const N = pool.length || 1; const df = {};
+  const docs = pool.map(it => { const fl = fieldsOf(it); const all = new Set(fl.flatMap(x=>x[0])); for (const t of toks) if ([...all].some(w => w===t || w.startsWith(t))) df[t] = (df[t]||0)+1; return {it, fl}; });
+  const out = [];
+  for (const {it, fl} of docs) {
+    let score = 0, hits = 0; const why = new Set(whyFilters(f));
+    for (const t of toks) {
+      const idf = Math.log(1 + N / (1 + (df[t]||0))); let best = 0, bestField = '';
+      const syn = SYN[t] || [];
+      for (const [words, w, label] of fl) { for (const word of words) {
+        let m = 0;
+        if (word === t) m = 1; else if (t.length >= 3 && word.startsWith(t)) m = .75; else if (syn.includes(word)) m = .55;
+        else if (t.length >= 4 && word.length >= 4 && lev1(word, t)) m = .45; else if (t.length >= 4 && word.includes(t)) m = .4;
+        if (m*w > best) { best = m*w; bestField = label; } } }
+      if (best > 0) { hits++; score += best * idf; why.add(bestField); }
+    }
+    if (!hits) continue;
+    score *= (0.5 + 0.5 * hits / toks.length);  /* reward covering more of the prompt */
+    score *= 1 + Math.max(0, 0.15 - (Date.now()-it.added)/(365*864e5)*0.15); /* gentle recency */
+    out.push({it, score, why:[...why]});
+  }
+  out.sort((a,b)=>b.score-a.score);
+  const top = out[0]?.score || 1; out.forEach(r => r.pct = Math.round(100 * r.score / top));
+  return out.filter(r => r.pct >= 18);
+}
+function whyFilters(f){ const w = []; if (f.kind) w.push(f.kind === 'image' ? 'photos' : f.kind); if (f.since) w.push('date'); if (f.placeIds) w.push('place'); return w; }
+
+const sampleFn = null;
+function setBusy(msg){ if (!msg) { render(); return; } $('#content').innerHTML = `<div class="empty"><div class="dial spin" style="width:56px;height:56px;border-width:1.5px"></div><p>${esc(msg)}</p></div>`; }
+
+/* ================= view state + render ================= */
+let view = {type:'all'}, layout = 'grid', results = null, sel = new Set();
+try { layout = localStorage.getItem('sr-layout') || 'grid'; } catch {}
+function go(v){ view = v; sel.clear(); if (v.type !== 'search') { results = null; } $('#side').classList.remove('open'); render(); $('#content').scrollTop = 0; }
+
+function render(){ renderSide(); renderHints(); renderMain(); $('#lgGrid').classList.toggle('on', layout==='grid'); $('#lgList').classList.toggle('on', layout==='list'); }
+function renderSide(){ renderSideInner(); const c = document.getElementById('syncChip'); if (c) renderSyncChip(c); }
+function renderSideInner(){
+  const fs = files(); const on = (t, id) => view.type === t && (id == null || view.id === id) ? ' on' : '';
+  const tree = (pid, depth) => childrenOf(pid).filter(i=>i.kind==='folder').sort((a,b)=>a.name.localeCompare(b.name)).map(f =>
+    `<button class="nv${on('folder', f.id)}" data-go="folder" data-id="${f.id}" data-drop="${f.id}" style="padding-left:${8+depth*14}px">${ic('folder')}<span class="nm">${esc(f.name)}</span><span class="ct">${descendantsCount(f.id)}</span></button>` + tree(f.id, depth+1)).join('');
+  const pl = [...places.values()].map(p => ({p, n: fs.filter(f=>f.placeId===p.id).length})).filter(x=>x.n).sort((a,b)=>b.n-a.n);
+  $('#side').innerHTML = `
+    <div class="brand"><span class="knob"></span>Strongroom</div>
+    <nav>
+      <button class="nv${on('all')}" data-go="all" data-drop="">${ic('all')}<span class="nm">All files</span><span class="ct">${fs.length}</span></button>
+      <button class="nv${on('recent')}" data-go="recent">${ic('recent')}<span class="nm">Recent</span></button>
+      <button class="nv${on('photos')}" data-go="photos">${ic('photo')}<span class="nm">Photos</span><span class="ct">${fs.filter(isImg).length}</span></button>
+      <button class="nv${on('docs')}" data-go="docs">${ic('doc')}<span class="nm">Documents</span><span class="ct">${fs.filter(f=>!isImg(f)).length}</span></button>
+      <button class="nv${on('places')}" data-go="places">${ic('place')}<span class="nm">Places</span><span class="ct">${pl.length}</span></button>
+    </nav>
+    <div class="navlabel">Folders <button id="sideNewFolder" aria-label="New folder">${ic('plus')}</button></div>
+    <nav>${tree(null, 0) || '<div style="padding:0 8px;font-size:12.5px;color:var(--steel-muted)">No folders yet</div>'}</nav>
+    ${pl.length ? `<div class="navlabel">Places</div><nav>${pl.slice(0,8).map(x=>`<button class="nv${on('place', x.p.id)}" data-go="place" data-id="${x.p.id}">${ic('place')}<span class="nm">${esc(x.p.name)}</span><span class="ct">${x.n}</span></button>`).join('')}</nav>` : ''}
+    <div class="sidefoot">
+      <div id="syncChip"></div>
+      <div id="meterBox" style="display:grid;gap:4px">${meterHTML()}</div>
+      <button class="btn" id="themeBtn">${ic('sun')}Theme</button>
+      <button class="btn" id="lockSide">${ic('lock')}Lock vault</button>
+    </div>`;
+}
+const HINTS = ['car insurance 2025','photos','tax documents','id at deposit box','receipts this year','house papers in Savannah'];
+function renderHints(){
+  const fs = files(); const tags = {}; fs.forEach(f => (f.tags||[]).forEach(t => tags[t] = (tags[t]||0)+1));
+  const top = Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);
+  const list = DEMO ? HINTS : [...(fs.some(isImg) ? ['photos'] : []), 'recent', ...top].slice(0,6);
+  $('#hints').innerHTML = fs.length ? list.map(h => `<button class="hint" data-hint="${esc(h)}">${esc(h)}</button>`).join('') : '';
+}
+function crumbs(title, sub, path){ $('#crumbs').innerHTML = (path||'') + `<h2>${esc(title)}</h2>` + (sub ? `<div class="sub">${sub}</div>` : ''); }
+
+function renderMain(){
+  const C = $('#content'); let list = [], fold = [];
+  const fs = files();
+  if (view.type === 'search' && results) {
+    crumbs(results.claude ? 'Claude found' : 'Results', `${results.list.length} match${results.list.length===1?'':'es'} for “${esc(results.q)}” · <button data-go="all">Clear</button>`);
+    return paint(C, [], results.list.map(r => r.it), results.list);
+  }
+  if (view.type === 'places') { crumbs('Places', 'Files saved at the same location are grouped together. Photos with GPS join the nearest place automatically.'); return renderPlaces(C); }
+  if (view.type === 'place') { const p = places.get(view.id); if (!p) return go({type:'places'});
+    crumbs(p.name, `<span class="mono">${fmtCo(p)}</span> · <button id="renamePlace">Rename</button> · <button id="editCo">Edit coordinates</button>`, `<button data-go="places">Places</button><span style="color:var(--muted)">/</span>`);
+    list = fs.filter(f => f.placeId === p.id); }
+  else if (view.type === 'folder') { const f = items.get(view.id); if (!f) return go({type:'all'});
+    const path = folderPath(f.parent).map(x => `<button data-go="folder" data-id="${x.id}">${esc(x.name)}</button><span style="color:var(--muted)">/</span>`).join('');
+    crumbs(f.name, `${descendantsCount(f.id)} items · <button id="renameFolder">Rename</button> · <button id="deleteFolder">Delete folder</button>`, `<button data-go="all">All files</button><span style="color:var(--muted)">/</span>` + path);
+    const ch = childrenOf(f.id); fold = ch.filter(i=>i.kind==='folder'); list = ch.filter(i=>i.kind==='file'); }
+  else if (view.type === 'photos') { crumbs('Photos'); list = fs.filter(isImg); }
+  else if (view.type === 'docs') { crumbs('Documents'); list = fs.filter(f=>!isImg(f)); }
+  else if (view.type === 'recent') { crumbs('Recent', 'Added in the last 30 days'); list = fs.filter(f => Date.now()-f.added < 30*864e5); }
+  else { crumbs('All files', `${fs.length} files · ${fmtSize(fs.reduce((a,b)=>a+(b.size||0),0))}`); fold = childrenOf(null).filter(i=>i.kind==='folder'); list = childrenOf(null).filter(i=>i.kind==='file'); }
+  list.sort((a,b)=>b.added-a.added); fold.sort((a,b)=>a.name.localeCompare(b.name));
+  paint(C, fold, list);
+}
+
+let urls = []; const revokeAll = () => { urls.forEach(u => URL.revokeObjectURL(u)); urls = []; };
+function thumbHTML(it, cls='glyph'){
+  if (it.kind === 'folder') return `<div class="glyph folder">${descendantsCount(it.id)}</div>`;
+  if (it.thumb) return `<img src="${it.thumb}" alt="">`;
+  return `<div class="${cls}">${esc(typeLabel(it))}</div>`;
+}
+function paint(C, fold, list, scored){
+  const total = fold.length + list.length;
+  if (!total) {
+    C.innerHTML = view.type === 'search'
+      ? `<div class="empty"><h3>Nothing matched</h3><p>Try fewer words, a tag, a folder name, or a place. ${sampleFn ? 'You can also press “Ask Claude” for a smarter read of your prompt.' : ''}</p></div>`
+      : `<div class="empty"><div class="glyph folder" style="width:80px;height:60px"></div><h3>${files().length ? 'This spot is empty' : 'Your vault is ready'}</h3><p>Drop files anywhere on this page, or use Add files. Everything is encrypted before it is saved.</p><button class="btn primary" data-act="upload">${ic('down')}Add files</button></div>`;
+    return;
+  }
+  const scoreMap = new Map((scored||[]).map(r => [r.it.id, r]));
+  const selbar = sel.size ? `<div class="selbar"><b>${sel.size} selected</b>
+      <button class="btn" data-act="bulkPlace">${ic('place')}Set place</button>
+      <button class="btn" data-act="bulkMove">${ic('folder')}Move</button>
+      <button class="btn danger" data-act="bulkDelete">${ic('trash')}Delete</button>
+      <button class="btn ghost" data-act="clearSel">Clear</button></div>` : '';
+  let body = '';
+  const sec = (label) => (fold.length && list.length) ? `<div class="sect">${label}</div>` : '';
+  if (layout === 'grid') {
+    const card = it => { const r = scoreMap.get(it.id); const p = placeOf(it);
+      return `<div class="card${sel.has(it.id)?' sel':''}" role="button" tabindex="0" data-open="${it.id}">
+        ${it.kind==='file' ? `<span class="chk" data-sel="${it.id}" role="checkbox" aria-checked="${sel.has(it.id)}" aria-label="Select">${sel.has(it.id)?ic('check'):''}</span>` : ''}
+        ${r ? `<span class="score">${r.pct}%</span>` : ''}
+        <div class="thumb">${thumbHTML(it)}</div>
+        <div class="meta"><div class="n" title="${esc(it.name)}">${esc(it.name)}</div>
+          <div class="s">${it.kind==='folder' ? 'Folder' : `<span class="mono">${fmtSize(it.size)}</span>${p ? `<span class="pin">${ic('place')}${esc(p.name.split('·')[0].trim())}</span>` : `<span>${fmtDate(it.added)}</span>`}`}</div>
+          ${r ? `<div class="why">${r.why.slice(0,3).map(w=>`<span>${esc(w)}</span>`).join('')}</div>` : ''}</div></div>`; };
+    body = (fold.length ? sec('Folders') + `<div class="grid${sel.size?' selecting':''}">${fold.map(card).join('')}</div>` : '') +
+           (list.length ? sec('Files') + `<div class="grid${sel.size?' selecting':''}">${list.map(card).join('')}</div>` : '');
+  } else {
+    const row = it => { const p = placeOf(it); const r = scoreMap.get(it.id);
+      return `<div class="row${sel.has(it.id)?' sel':''}" role="button" tabindex="0" data-open="${it.id}">
+        <div class="rowico${it.kind==='folder'?' f':''}">${it.kind==='folder' ? '' : it.thumb ? `<img src="${it.thumb}" alt="">` : esc(typeLabel(it))}</div>
+        <div class="nm">${esc(it.name)}${r ? ` <span class="mono" style="color:var(--brass);font-size:11px">${r.pct}%</span>` : ''}</div>
+        <div class="c hide">${p ? esc(p.name) : it.kind==='folder' ? `${descendantsCount(it.id)} items` : '—'}</div>
+        <div class="c mono">${it.kind==='folder' ? '' : fmtSize(it.size)}</div>
+        <div class="c hide">${fmtDate(it.added)}</div></div>`; };
+    body = `<div class="list">${[...fold, ...list].map(row).join('')}</div>`;
+  }
+  C.innerHTML = selbar + body;
+}
+
+/* ---------- places view with a plotted map ---------- */
+function renderPlaces(C){
+  const fs = files(); const pl = [...places.values()].map(p => ({p, items: fs.filter(f=>f.placeId===p.id)})).filter(x=>x.items.length);
+  const noPlace = fs.filter(f => !f.placeId).length;
+  if (!pl.length) { C.innerHTML = `<div class="empty"><div class="glyph" style="border-radius:50%;width:60px;height:60px">${ic('place')}</div><h3>No places yet</h3><p>Give files a place when you add them, or open any file and choose “Place”. Photos taken with location on are placed automatically.</p></div>`; return; }
+  C.innerHTML = `<div class="map"><canvas id="mapc"></canvas><span class="legend">${pl.length} places · ${fs.length - noPlace} placed files</span></div>
+    <div class="places">${pl.sort((a,b)=>b.items.length-a.items.length).map(({p, items: its}) => `
+      <button class="place" data-go="place" data-id="${p.id}">
+        <h4>${ic('place')}${esc(p.name)}</h4>
+        <div class="co">${fmtCo(p)} · ${its.length} file${its.length===1?'':'s'}</div>
+        <div class="strip">${its.slice(0,5).map(it => `<div>${it.thumb ? `<img src="${it.thumb}" alt="">` : esc(typeLabel(it))}</div>`).join('')}</div>
+      </button>`).join('')}</div>
+    ${noPlace ? `<p style="color:var(--muted);margin-top:16px">${noPlace} file${noPlace===1?' has':'s have'} no place yet.</p>` : ''}`;
+  requestAnimationFrame(() => drawMap(pl));
+}
+function drawMap(pl){
+  const cv = $('#mapc'); if (!cv) return; const dpr = window.devicePixelRatio || 1; const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const cs = getComputedStyle(document.documentElement); const col = n => cs.getPropertyValue(n).trim();
+  const pts = pl.filter(x => x.p.lat != null);
+  g.strokeStyle = col('--line'); g.lineWidth = 1;
+  for (let x = 0; x < W; x += 32) { g.beginPath(); g.moveTo(x+.5, 0); g.lineTo(x+.5, H); g.stroke(); }
+  for (let y = 0; y < H; y += 32) { g.beginPath(); g.moveTo(0, y+.5); g.lineTo(W, y+.5); g.stroke(); }
+  if (!pts.length) { g.fillStyle = col('--muted'); g.font = '13px ' + col('--f-body'); g.fillText('Add coordinates to a place to see it here', 16, 28); return; }
+  let la = pts.map(x=>x.p.lat), lo = pts.map(x=>x.p.lon);
+  let minLa = Math.min(...la), maxLa = Math.max(...la), minLo = Math.min(...lo), maxLo = Math.max(...lo);
+  const padLa = Math.max((maxLa-minLa)*.25, .05), padLo = Math.max((maxLo-minLo)*.25, .05);
+  minLa -= padLa; maxLa += padLa; minLo -= padLo; maxLo += padLo;
+  const M = 30; const X = lon => M + (lon-minLo)/(maxLo-minLo)*(W-2*M); const Y = lat => H - M - (lat-minLa)/(maxLa-minLa)*(H-2*M);
+  const max = Math.max(...pts.map(x=>x.items.length)); const placed = [];
+  pts.forEach(({p, items: its}) => {
+    const x = X(p.lon), y = Y(p.lat), r = 6 + 12*Math.sqrt(its.length/max);
+    g.beginPath(); g.arc(x, y, r+6, 0, 7); g.fillStyle = col('--brass-soft'); g.fill();
+    g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = col('--brass'); g.fill();
+    g.fillStyle = col('--raised'); g.font = '600 11px ' + col('--f-mono'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(its.length, x, y+.5);
+    const label = p.name.length > 26 ? p.name.slice(0,25)+'…' : p.name; g.font = '500 12px ' + col('--f-body');
+    let ly = y - r - 12; if (placed.some(q => Math.abs(q.x-x) < 120 && Math.abs(q.y-ly) < 16)) ly = y + r + 16;
+    const lx = Math.min(Math.max(x, 70), W-70); placed.push({x: lx, y: ly});
+    g.fillStyle = col('--ink'); g.fillText(label, lx, ly);
+  });
+}
+
+/* ================= drawer (file details) ================= */
+function closeLayer(){ $('#layer').innerHTML = ''; }
+function openModal(html){ $('#layer').innerHTML = `<div class="modal" data-closeout><div class="mbox" role="dialog" aria-modal="true">${html}</div></div>`; const f = $('#layer input, #layer select, #layer textarea'); if (f) f.focus(); }
+const folderOptions = (selected) => `<option value="">Top level</option>` + (function walk(pid, d){ return childrenOf(pid).filter(i=>i.kind==='folder').sort((a,b)=>a.name.localeCompare(b.name)).map(f => `<option value="${f.id}"${f.id===selected?' selected':''}>${'— '.repeat(d)}${esc(f.name)}</option>` + walk(f.id, d+1)).join(''); })(null, 0);
+const placeOptions = (selected, withAuto) => (withAuto ? `<option value="auto">From photo GPS, if any</option>` : '') + `<option value=""${!selected && !withAuto?' selected':''}>No place</option>` +
+  [...places.values()].sort((a,b)=>a.name.localeCompare(b.name)).map(p => `<option value="${p.id}"${p.id===selected?' selected':''}>${esc(p.name)}</option>`).join('') + `<option value="new">New place…</option>`;
+
+async function openFile(id){
+  const it = items.get(id); if (!it) return; if (it.kind === 'folder') return go({type:'folder', id});
+  const p = placeOf(it); const similar = similarUnplaced(it);
+  $('#layer').innerHTML = `<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="${esc(it.name)}">
+    <div class="dhead"><h3>${esc(it.name)}</h3><button class="iconbtn" data-close aria-label="Close">${ic('x')}</button></div>
+    <div class="dbody">
+      <div class="preview" id="pv">${it.thumb ? `<img src="${it.thumb}" alt="">` : `<div class="glyph" style="transform:scale(1.4)">${esc(typeLabel(it))}</div>`}</div>
+      <dl class="kv"><dt>Size</dt><dd>${fmtSize(it.size)}</dd><dt>Added</dt><dd>${fmtDate(it.added)}</dd><dt>Type</dt><dd>${esc(it.mime || typeLabel(it))}</dd><dt>Location</dt><dd>${p ? esc(p.name) + '<br>' + fmtCo(p) : 'None'}</dd></dl>
+      <div class="field"><label for="dName">Name</label><input id="dName" value="${esc(it.name)}"></div>
+      <div class="two"><div class="field"><label for="dFolder">Folder</label><select id="dFolder">${folderOptions(it.parent)}</select></div>
+        <div class="field"><label for="dPlace">Place</label><select id="dPlace">${placeOptions(it.placeId)}</select></div></div>
+      <div class="field"><label for="dTags">Tags</label><input id="dTags" value="${esc((it.tags||[]).join(', '))}" placeholder="passport, id, 2026"></div>
+      <div class="field"><label for="dNote">Note</label><textarea id="dNote" placeholder="Anything you'd search for later">${esc(it.note||'')}</textarea></div>
+      ${p && similar.length ? `<div class="callout"><span><b>${similar.length} similar file${similar.length===1?'':'s'}</b> ${similar.length===1?'has':'have'} no place: ${similar.slice(0,3).map(s=>esc(s.name)).join(', ')}${similar.length>3?'…':''}</span><button class="btn" id="placeSimilar">${ic('place')}Save them at ${esc(p.name)}</button></div>` : ''}
+    </div>
+    <div class="dfoot"><button class="btn primary" id="dSave">Save changes</button><button class="btn" id="dDown">${ic('down')}Save to device</button><button class="btn danger" id="dDel" style="margin-left:auto">${ic('trash')}Delete</button></div></div>`;
+  $('#dPlace').onchange = e => { if (e.target.value === 'new') newPlaceFlow(pid => { openFile(id); if (pid) { it.placeId = pid; persist(it).then(()=>{ render(); openFile(id); }); } }); };
+  $('#dSave').onclick = async () => { it.name = $('#dName').value.trim() || it.name; it.parent = $('#dFolder').value || null; const pv = $('#dPlace').value; it.placeId = (pv && pv !== 'new') ? pv : null;
+    it.tags = $('#dTags').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean); it.note = $('#dNote').value.trim(); await persist(it); closeLayer(); render(); toast('Saved'); };
+  $('#dDel').onclick = () => confirmBox(`Delete “${it.name}”?`, 'The encrypted file is removed from this device. This cannot be undone.', 'Delete', async () => { await removeItem(it.id); render(); toast('Deleted'); });
+  $('#dDown').onclick = () => saveOut(it);
+  const ps = $('#placeSimilar'); if (ps) ps.onclick = async () => { for (const s of similar) { s.placeId = it.placeId; await persist(s); } render(); openFile(id); toast(`${similar.length} file${similar.length===1?'':'s'} saved at ${p.name}`); };
+  // full preview
+  try { const b = await getBlob(it); if (!b || !$('#pv')) return;
+    if (isImg(it) && !/heic/.test(extOf(it.name))) { const u = URL.createObjectURL(b); urls.push(u); $('#pv').innerHTML = `<img src="${u}" alt="${esc(it.name)}">`; }
+    else if (it.text) $('#pv').innerHTML = `<pre>${esc(it.text.slice(0, 6000))}</pre>`;
+  } catch {}
+}
+function similarUnplaced(it){
+  const mine = new Set([...(it.tags||[]), ...tokenize(it.name).filter(w=>w.length>2 && !STOP.has(w) && !/^\d+$/.test(w))]); if (!mine.size) return [];
+  return files().filter(f => f.id !== it.id && !f.placeId).filter(f => { const o = [...(f.tags||[]), ...tokenize(f.name)]; const shared = o.filter(w => mine.has(w)).length; return shared >= 1 && (shared / new Set([...o, ...mine]).size) >= 0.2; });
+}
+async function saveOut(it){
+  if (DEMO) { toast('Demo items have no file attached'); return; }
+  try { const b = await getBlob(it); if (!b) { toast('This file is not available offline yet'); return; }
+    const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = it.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
+  catch { toast('Could not decrypt this file'); }
+}
+async function removeItem(id){ const it = items.get(id); if (!it) return;
+  if (it.kind === 'folder') for (const c of childrenOf(id)) await removeItem(c.id);
+  items.delete(id); places.delete(id); blobCache.delete(id); sel.delete(id); if (!DEMO) { await recDel(id); await removePending(id); await pushDelete(id); } }
+function confirmBox(title, text, verb, fn){ openModal(`<h3>${esc(title)}</h3><p>${esc(text)}</p><div class="mact"><button class="btn" data-close>Cancel</button><button class="btn primary" id="cfm" style="background:var(--danger);border-color:var(--danger)">${esc(verb)}</button></div>`); $('#cfm').onclick = async () => { closeLayer(); await fn(); }; }
+function textBox(title, label, value, verb, fn){ openModal(`<h3>${esc(title)}</h3><form id="tb" class="field" style="gap:14px"><div class="field"><label for="tbIn">${esc(label)}</label><input id="tbIn" value="${esc(value||'')}" required></div><div class="mact"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary">${esc(verb)}</button></div></form>`);
+  $('#tbIn').select(); $('#tb').onsubmit = async e => { e.preventDefault(); const v = $('#tbIn').value.trim(); if (!v) return; closeLayer(); await fn(v); }; }
+function newPlaceFlow(done, preset){
+  openModal(`<h3>New place</h3><p>Files saved here are grouped together. Coordinates are optional; they put the place on your map.</p>
+    <form id="np" style="display:grid;gap:12px"><div class="field"><label for="npName">Place name</label><input id="npName" required placeholder="Home, Bank vault, Mom's house…" value="${esc(preset?.name||'')}"></div>
+    <div class="two"><div class="field"><label for="npLat">Latitude</label><input id="npLat" inputmode="decimal" placeholder="33.7490" value="${preset?.lat ?? ''}"></div><div class="field"><label for="npLon">Longitude</label><input id="npLon" inputmode="decimal" placeholder="-84.3880" value="${preset?.lon ?? ''}"></div></div>
+    <button type="button" class="btn" id="npHere">${ic('place')}Use my current location</button>
+    <p style="font-size:12.5px">Or in Google or Apple Maps, long-press a spot to copy its coordinates and paste “33.749, -84.388” into Latitude.</p>
+    <div class="mact"><button type="button" class="btn" id="npCancel">Cancel</button><button class="btn primary">Create place</button></div></form>`);
+  $('#npLat').addEventListener('input', e => { const m = e.target.value.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/); if (m) { e.target.value = m[1]; $('#npLon').value = m[2]; } });
+  $('#npCancel').onclick = () => { closeLayer(); done(null); };
+  $('#npHere').onclick = () => { if (!navigator.geolocation) { toast('This browser cannot share location'); return; } $('#npHere').disabled = true;
+    navigator.geolocation.getCurrentPosition(pos => { $('#npLat').value = pos.coords.latitude.toFixed(5); $('#npLon').value = pos.coords.longitude.toFixed(5); $('#npHere').disabled = false; },
+      () => { toast('Location was not shared. You can type coordinates instead.'); $('#npHere').disabled = false; }, {enableHighAccuracy: true, timeout: 10000}); };
+  $('#np').onsubmit = async e => { e.preventDefault(); const lat = parseFloat($('#npLat').value), lon = parseFloat($('#npLon').value);
+    const p = {id: uid(), kind:'place', name: $('#npName').value.trim(), lat: isFinite(lat) && Math.abs(lat)<=90 ? lat : null, lon: isFinite(lon) && Math.abs(lon)<=180 ? lon : null};
+    if (p.lat == null || p.lon == null) { p.lat = null; p.lon = null; }
+    places.set(p.id, p); await persist(p); closeLayer(); done(p.id); };
+}
+
+/* ================= upload ================= */
+let pending = [];
+function startUpload(fileList){
+  pending = [...fileList]; if (!pending.length) return;
+  const curFolder = view.type === 'folder' ? view.id : null; const curPlace = view.type === 'place' ? view.id : null;
+  const hasImg = pending.some(f => /^image\/jpe?g/.test(f.type) || /\.jpe?g$/i.test(f.name));
+  openModal(`<h3>Lock ${pending.length} file${pending.length===1?'':'s'} in the vault</h3>
+    <div class="flist">${pending.map(f => `<div><span>${esc(f.name)}</span><span class="mono">${fmtSize(f.size)}</span></div>`).join('')}</div>
+    <div class="two"><div class="field"><label for="uFolder">Folder</label><select id="uFolder">${folderOptions(curFolder)}</select></div>
+      <div class="field"><label for="uPlace">Place</label><select id="uPlace">${placeOptions(curPlace, hasImg && !curPlace)}</select></div></div>
+    <div class="field"><label for="uTags">Tags</label><input id="uTags" placeholder="insurance, car, 2026"></div>
+    <div class="field"><label for="uNote">Note</label><input id="uNote" placeholder="Optional. Words you might search for later."></div>
+    <label class="check"><input type="checkbox" id="uGps" checked> Group photos by where they were taken. Photos with GPS join a saved place within 1 km, or start a new one.</label>
+    ${DEMO ? '<p style="color:var(--brass)">Demo vault: files show up for this visit only and are not saved.</p>' : ''}
+    <div class="mact"><button class="btn" data-close>Cancel</button><button class="btn primary" id="uGo">${ic('lock')}Encrypt and save</button></div>`);
+  $('#uPlace').onchange = e => { if (e.target.value === 'new') newPlaceFlow(pid => { const keep = pending; startUpload(keep); if (pid) $('#uPlace').value = pid; }); };
+  $('#uGo').onclick = doUpload;
+}
+async function doUpload(){
+  const folder = $('#uFolder').value || null, placeSel = $('#uPlace').value, gps = $('#uGps').checked;
+  const tags = $('#uTags').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean), note = $('#uNote').value.trim();
+  const list = pending; pending = []; closeLayer(); let n = 0, placedAuto = 0;
+  for (const f of list) {
+    setBusy(`Encrypting ${++n} of ${list.length}: ${f.name}`);
+    try {
+      const buf = await f.arrayBuffer();
+      const it = {id: uid(), kind:'file', name: f.name, parent: folder, mime: f.type || '', size: f.size, added: Date.now(), tags: [...tags], note, placeId: (placeSel && placeSel !== 'auto' && placeSel !== 'new') ? placeSel : null, text: ''};
+      if (/^text\/|json|csv|xml|markdown/.test(f.type) || /\.(txt|md|csv|json|log)$/i.test(f.name)) { if (f.size < 3e6) it.text = dec.decode(buf).slice(0, 20000); }
+      if (/^image\//.test(f.type)) { it.thumb = await makeThumb(f).catch(()=>null);
+        if (gps && (placeSel === 'auto' || !it.placeId)) { const pt = exifGPS(buf); if (pt) { let p = nearestPlace(pt, 1);
+          if (!p) { p = {id: uid(), kind:'place', name: `Pinned ${pt.lat.toFixed(3)}, ${pt.lon.toFixed(3)}`, lat: pt.lat, lon: pt.lon}; places.set(p.id, p); await persist(p); }
+          it.placeId = p.id; placedAuto++; } } }
+      items.set(it.id, it);
+      if (DEMO) blobCache.set(it.id, new Blob([buf], {type: f.type})); else await persist(it, buf);
+    } catch (e) { toast(`Could not save ${f.name}: ${e.message}`); }
+  }
+  render(); refreshUsage(); toast(`${list.length} file${list.length===1?'':'s'} encrypted and ${CLOUD.ready && !DEMO ? 'synced' : 'saved'}${placedAuto ? ` · ${placedAuto} placed from photo GPS` : ''}`);
+}
+async function makeThumb(file){
+  const bmp = await createImageBitmap(file); const s = 320 / Math.max(bmp.width, bmp.height); const w = Math.max(1, Math.round(bmp.width*Math.min(1,s))), h = Math.max(1, Math.round(bmp.height*Math.min(1,s)));
+  const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(bmp, 0, 0, w, h); bmp.close && bmp.close(); return c.toDataURL('image/jpeg', .72);
+}
+function exifGPS(buf){ try {
+  const v = new DataView(buf); if (v.getUint16(0) !== 0xFFD8) return null; let o = 2;
+  while (o < v.byteLength - 10) { const m = v.getUint16(o), len = v.getUint16(o+2);
+    if (m === 0xFFE1 && v.getUint32(o+4) === 0x45786966) return tiffGPS(v, o+10);
+    if ((m & 0xFF00) !== 0xFF00 || m === 0xFFDA) break; o += 2 + len; }
+  return null; } catch { return null; } }
+function tiffGPS(v, t){
+  const le = v.getUint16(t) === 0x4949, g16 = p => v.getUint16(p, le), g32 = p => v.getUint32(p, le);
+  const ifd = t + g32(t+4), n = g16(ifd); let gp = null;
+  for (let i = 0; i < n; i++) { const e = ifd + 2 + i*12; if (g16(e) === 0x8825) gp = t + g32(e+8); }
+  if (!gp) return null; const gn = g16(gp), tg = {};
+  for (let i = 0; i < gn; i++) { const e = gp + 2 + i*12, tag = g16(e), type = g16(e+2), cnt = g32(e+4);
+    if (type === 2) tg[tag] = String.fromCharCode(v.getUint8(e+8));
+    else if (type === 5) { const p = t + g32(e+8), a = []; for (let k = 0; k < cnt; k++) a.push(g32(p+k*8) / (g32(p+k*8+4) || 1)); tg[tag] = a; } }
+  if (!tg[2] || !tg[4]) return null; const dms = a => a[0] + (a[1]||0)/60 + (a[2]||0)/3600;
+  let lat = dms(tg[2]), lon = dms(tg[4]); if (tg[1] === 'S') lat = -lat; if (tg[3] === 'W') lon = -lon;
+  if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) return null; return {lat, lon};
+}
+
+/* ================= bulk ================= */
+function bulkPlace(){
+  openModal(`<h3>Set place for ${sel.size} file${sel.size===1?'':'s'}</h3><div class="field"><label for="bp">Place</label><select id="bp">${placeOptions(null)}</select></div>
+    <div class="mact"><button class="btn" data-close>Cancel</button><button class="btn primary" id="bpGo">Apply</button></div>`);
+  const apply = async pid => { for (const id of sel) { const it = items.get(id); if (it) { it.placeId = pid || null; await persist(it); } } sel.clear(); render(); toast('Place updated'); };
+  $('#bp').onchange = e => { if (e.target.value === 'new') newPlaceFlow(pid => { if (pid) apply(pid); }); };
+  $('#bpGo').onclick = () => { const v = $('#bp').value; if (v === 'new') return; closeLayer(); apply(v); };
+}
+function bulkMove(){
+  openModal(`<h3>Move ${sel.size} file${sel.size===1?'':'s'}</h3><div class="field"><label for="bm">Folder</label><select id="bm">${folderOptions(null)}</select></div>
+    <div class="mact"><button class="btn" data-close>Cancel</button><button class="btn primary" id="bmGo">Move</button></div>`);
+  $('#bmGo').onclick = async () => { const fid = $('#bm').value || null; closeLayer(); for (const id of sel) { const it = items.get(id); if (it) { it.parent = fid; await persist(it); } } sel.clear(); render(); toast('Moved'); };
+}
+function newFolder(){ textBox('New folder', 'Folder name', '', 'Create', async name => { const f = {id: uid(), kind:'folder', name, parent: view.type === 'folder' ? view.id : null, added: Date.now()}; items.set(f.id, f); await persist(f); render(); }); }
+
+/* ================= events ================= */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-close],[data-closeout],[data-go],[data-open],[data-sel],[data-act],[data-hint],#themeBtn,#lockSide,#sideNewFolder,#renameFolder,#deleteFolder,#renamePlace,#editCo');
+  if (!t) return;
+  if (t.matches('[data-closeout]') && e.target !== t) return;
+  if (t.matches('[data-close],[data-closeout]')) return closeLayer();
+  if (t.dataset.sel) { e.stopPropagation(); sel.has(t.dataset.sel) ? sel.delete(t.dataset.sel) : sel.add(t.dataset.sel); return renderMain(); }
+  if (t.dataset.go) { $('#q').value = t.dataset.go === 'all' && results ? '' : $('#q').value; return go({type: t.dataset.go, id: t.dataset.id}); }
+  if (t.dataset.open) { if (sel.size && items.get(t.dataset.open)?.kind === 'file') { sel.has(t.dataset.open) ? sel.delete(t.dataset.open) : sel.add(t.dataset.open); return renderMain(); } return openFile(t.dataset.open); }
+  if (t.dataset.hint) { $('#q').value = t.dataset.hint; return runSearch(); }
+  const a = t.dataset.act;
+  if (a === 'upload') return $('#fileIn').click();
+  if (a === 'clearSel') { sel.clear(); return renderMain(); }
+  if (a === 'bulkPlace') return bulkPlace();
+  if (a === 'bulkMove') return bulkMove();
+  if (a === 'bulkDelete') return confirmBox(`Delete ${sel.size} file${sel.size===1?'':'s'}?`, 'They are removed from this device. This cannot be undone.', 'Delete', async () => { for (const id of [...sel]) await removeItem(id); render(); toast('Deleted'); });
+  if (t.id === 'themeBtn') { const r = document.documentElement; const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('sr-theme', r.dataset.theme); } catch {} return render(); }
+  if (t.id === 'lockSide') return lockNow();
+  if (t.id === 'sideNewFolder') return newFolder();
+  if (t.id === 'renameFolder') { const f = items.get(view.id); return textBox('Rename folder', 'Folder name', f.name, 'Rename', async v => { f.name = v; await persist(f); render(); }); }
+  if (t.id === 'deleteFolder') { const f = items.get(view.id); return confirmBox(`Delete “${f.name}”?`, `This folder and the ${descendantsCount(f.id)} items inside it are removed. This cannot be undone.`, 'Delete folder', async () => { await removeItem(f.id); go({type:'all'}); }); }
+  if (t.id === 'renamePlace') { const p = places.get(view.id); return textBox('Rename place', 'Place name', p.name, 'Rename', async v => { p.name = v; await persist(p); render(); }); }
+  if (t.id === 'editCo') { const p = places.get(view.id); return newPlaceFlowEdit(p); }
+});
+function newPlaceFlowEdit(p){
+  openModal(`<h3>Coordinates for ${esc(p.name)}</h3><form id="ec" style="display:grid;gap:12px"><div class="two"><div class="field"><label for="ecLat">Latitude</label><input id="ecLat" value="${p.lat ?? ''}"></div><div class="field"><label for="ecLon">Longitude</label><input id="ecLon" value="${p.lon ?? ''}"></div></div><div class="mact"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary">Save</button></div></form>`);
+  $('#ecLat').addEventListener('input', e => { const m = e.target.value.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/); if (m) { e.target.value = m[1]; $('#ecLon').value = m[2]; } });
+  $('#ec').onsubmit = async e => { e.preventDefault(); const la = parseFloat($('#ecLat').value), lo = parseFloat($('#ecLon').value); const ok = isFinite(la) && isFinite(lo) && Math.abs(la)<=90 && Math.abs(lo)<=180;
+    p.lat = ok ? la : null; p.lon = ok ? lo : null; await persist(p); closeLayer(); render(); };
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if ($('#layer').innerHTML) closeLayer(); else if (sel.size) { sel.clear(); renderMain(); } }
+  if (e.key === '/' && !$('#app').hidden && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); }
+  if (e.key === 'Enter' && e.target.matches('[data-open]')) e.target.click();
+});
+function runSearch(){ const q = $('#q').value.trim(); if (!q) return go({type:'all'}); results = {q, list: search(q)}; view = {type:'search'}; sel.clear(); render(); }
+$('#askForm').addEventListener('submit', e => { e.preventDefault(); runSearch(); });
+let qT; $('#q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { if ($('#q').value.trim().length >= 2) runSearch(); else if (!$('#q').value.trim() && view.type === 'search') go({type:'all'}); }, 220); });
+$('#uploadBtn').onclick = () => $('#fileIn').click();
+$('#fileIn').onchange = e => { startUpload(e.target.files); e.target.value = ''; };
+$('#newFolder').onclick = newFolder;
+$('#lgGrid').onclick = () => { layout = 'grid'; try { localStorage.setItem('sr-layout', layout); } catch {} render(); };
+$('#lgList').onclick = () => { layout = 'list'; try { localStorage.setItem('sr-layout', layout); } catch {} render(); };
+$('#menuBtn').onclick = () => $('#side').classList.toggle('open');
+$('#lockBtnM').onclick = lockNow;
+const content = $('#content'); let dragDepth = 0;
+['dragenter','dragover'].forEach(ev => document.addEventListener(ev, e => { if ($('#app').hidden || !e.dataTransfer || ![...e.dataTransfer.types].includes('Files')) return; e.preventDefault(); content.classList.add('dragging'); }));
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) content.classList.remove('dragging'); });
+document.addEventListener('drop', e => { if ($('#app').hidden) return; e.preventDefault(); content.classList.remove('dragging'); if (e.dataTransfer.files.length) {
+  const folderBtn = e.target.closest('[data-drop]'); if (folderBtn) view = folderBtn.dataset.drop ? {type:'folder', id: folderBtn.dataset.drop} : {type:'all'}; startUpload(e.dataTransfer.files); } });
+window.addEventListener('resize', () => { if (view.type === 'places') renderMain(); });
+try { const th = localStorage.getItem('sr-theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
+boot();
+})();
+</script>
+
+</body>
+</html>
